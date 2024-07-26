@@ -8,6 +8,9 @@ import com.salesphere.salesphere.repositories.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class ProductService {
 
@@ -20,8 +23,11 @@ public class ProductService {
         this.productMapper = productMapper;
     }
 
-    public void getProducts() {
-        repository.findAll();
+    public List<ProductResponseDTO> getProducts() {
+        List<Product> products = repository.findAll();
+        return products.stream()
+                .map(productMapper::toProductResponse)
+                .collect(Collectors.toList());
     }
 
     public ProductResponseDTO createProduct(ProductRequestDTO productRequestDTO) {

@@ -5,6 +5,8 @@ import com.salesphere.salesphere.models.dto.ProductResponseDTO;
 import com.salesphere.salesphere.services.ProductService;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RequestMapping(value = "/product")
 @RestController
 public class ProductController {
@@ -16,8 +18,8 @@ public class ProductController {
     }
 
     @GetMapping(value = "/get")
-    public void getProduct(){
-        productService.getProducts();
+    public List<ProductResponseDTO> getProduct() {
+        return productService.getProducts();
     }
 
     @PostMapping(value = "/create")
