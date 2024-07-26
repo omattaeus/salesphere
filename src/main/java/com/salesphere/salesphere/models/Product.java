@@ -1,5 +1,6 @@
 package com.salesphere.salesphere.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -18,24 +19,25 @@ public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @NotNull
-    @Column(name = "product_name")
+
+    @NotNull(message = "O nome do produto não pode estar vazio!")
     private String productName;
-    @Column(name = "brand")
+
+    @NotNull(message = "A marca não pode estar vazia!")
     private String brand;
-    @NotNull
-    @Column(name = "category")
+
+    @NotNull(message = "A categoria não pode estar vazia!")
     private String category;
-    @NotNull
-    @Column(name = "purchase_price")
-    private String purchasePrice;
-    @NotNull
-    @Column(name = "sale_price")
-    private String salePrice;
-    @NotNull
-    @Column(name = "stock_quantity")
-    private String stockQuantity;
-    @NotNull
-    @Column(name = "code_sku")
+
+    @NotNull(message = "O preço de compra não pode estar vazio!")
+    private Double purchasePrice;
+
+    @NotNull(message = "O preço de venda não pode estar vazio!")
+    private Double salePrice;
+
+    @NotNull(message = "A quantidade em estoque não pode estar vazia!")
+    private Long stockQuantity;
+
+    @NotNull(message = "Código SKU não pode estar vazio!")
     private String codeSku;
 }
