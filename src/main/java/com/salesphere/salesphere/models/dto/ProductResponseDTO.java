@@ -6,5 +6,6 @@ public record ProductResponseDTO(String productName,
                                  Double purchasePrice,
                                  Double salePrice,
                                  Long stockQuantity,
+                                 Long minimumQuantity,
                                  String codeSKU) {
 }

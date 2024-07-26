@@ -38,6 +38,9 @@ public class Product {
     @NotNull(message = "A quantidade em estoque não pode estar vazia!")
     private Long stockQuantity;
 
+    @NotNull(message = "A quantidade mínima em estoque não pode estar vazia!")
+    private Long minimumQuantity;
+
     @NotNull(message = "Código SKU não pode estar vazio!")
     private String codeSku;
 }

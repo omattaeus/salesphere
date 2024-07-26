@@ -35,4 +35,22 @@ public class ProductService {
         Product savedProduct = repository.save(product);
         return productMapper.toProductResponse(savedProduct);
     }
+
+    public List<Product> getProductsWithLowStock() {
+        List<Product> allProducts = repository.findAll();
+        return allProducts.stream()
+                .filter(product -> product.getStockQuantity() < product.getMinimumQuantity())
+                .collect(Collectors.toList());
+    }
+
+    public void checkStock() {
+        List<Product> productsWithStockLow = getProductsWithLowStock();
+        for (Product product : productsWithStockLow) {
+            sendLowStockAlert(product);
+        }
+    }
+
+    private void sendLowStockAlert(Product product) {
+        //TODO: Implementação da lógica de envio de alerta, por exemplo, email ou notificação
+    }
 }

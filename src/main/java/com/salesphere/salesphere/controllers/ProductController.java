@@ -1,5 +1,6 @@
 package com.salesphere.salesphere.controllers;
 
+import com.salesphere.salesphere.models.Product;
 import com.salesphere.salesphere.models.dto.ProductRequestDTO;
 import com.salesphere.salesphere.models.dto.ProductResponseDTO;
 import com.salesphere.salesphere.services.ProductService;
@@ -26,5 +27,15 @@ public class ProductController {
     public ProductResponseDTO createProduct(@RequestBody ProductRequestDTO productRequestDTO){
         ProductResponseDTO create = productService.createProduct(productRequestDTO);
         return create;
+    }
+
+    @GetMapping("/low-stock")
+    public List<Product> getProductsWithLowStock() {
+        return productService.getProductsWithLowStock();
+    }
+
+    @GetMapping("/check-stock")
+    public void checkStock() {
+        productService.checkStock();
     }
 }

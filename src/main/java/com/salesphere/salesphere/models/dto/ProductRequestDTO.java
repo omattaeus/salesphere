@@ -8,5 +8,6 @@ public record ProductRequestDTO(String productName,
                                 Double purchasePrice,
                                 Double salePrice,
                                 Long stockQuantity,
+                                Long minimumQuantity,
                                 @JsonProperty("code_sku") String codeSKU) {
 }
