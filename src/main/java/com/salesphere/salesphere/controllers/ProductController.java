@@ -18,16 +18,11 @@ public class ProductController {
         this.productService = productService;
     }
 
-    @GetMapping(value = "/get")
+    @GetMapping(value = "/get-all")
     public List<ProductResponseDTO> getProduct() {
-        return productService.getProducts();
+        return productService.getAllProducts();
     }
 
-    @PostMapping(value = "/create")
-    public ProductResponseDTO createProduct(@RequestBody ProductRequestDTO productRequestDTO){
-        ProductResponseDTO create = productService.createProduct(productRequestDTO);
-        return create;
-    }
 
     @GetMapping("/low-stock")
     public List<Product> getProductsWithLowStock() {
@@ -37,5 +32,11 @@ public class ProductController {
     @GetMapping("/check-stock")
     public void checkStock() {
         productService.checkStock();
+    }
+
+    @PostMapping(value = "/create")
+    public ProductResponseDTO createProduct(@RequestBody ProductRequestDTO productRequestDTO){
+        ProductResponseDTO create = productService.createProduct(productRequestDTO);
+        return create;
     }
 }

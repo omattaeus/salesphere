@@ -1,10 +1,12 @@
 package com.salesphere.salesphere.models.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.salesphere.salesphere.models.enums.CategoryEnum;
 
 public record ProductRequestDTO(String productName,
+                                String description,
                                 String brand,
-                                String category,
+                                CategoryEnum category,
                                 Double purchasePrice,
                                 Double salePrice,
                                 Long stockQuantity,

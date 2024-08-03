@@ -23,7 +23,7 @@ public class ProductService {
         this.productMapper = productMapper;
     }
 
-    public List<ProductResponseDTO> getProducts() {
+    public List<ProductResponseDTO> getAllProducts() {
         List<Product> products = repository.findAll();
         return products.stream()
                 .map(productMapper::toProductResponse)
