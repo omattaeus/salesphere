@@ -34,7 +34,8 @@ public class ProductMapper {
                 productRequestDTO.salePrice(),
                 productRequestDTO.stockQuantity(),
                 productRequestDTO.minimumQuantity(),
-                productRequestDTO.codeSKU()
+                productRequestDTO.codeSKU(),
+                productRequestDTO.availability()
         );
     }
 
@@ -52,7 +53,8 @@ public class ProductMapper {
                 product.getSalePrice(),
                 product.getStockQuantity(),
                 product.getMinimumQuantity(),
-                product.getCodeSku()
+                product.getCodeSku(),
+                product.getAvailability()
         );
     }
 }

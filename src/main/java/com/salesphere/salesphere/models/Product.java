@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import com.salesphere.salesphere.models.enums.AvailabilityEnum;
 
 @Entity
 @Table(name = "tb_product")
@@ -50,11 +51,16 @@ public class Product {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
+    @NotNull(message = "O status de disponibilidade não pode estar vazio!")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "availability")
+    private AvailabilityEnum availability;
+
     // Construtor com todos os campos necessários
     public Product(Long id, String productName, String description,
                    String brand, Category category, Double purchasePrice,
                    Double salePrice, Long stockQuantity, Long minimumQuantity,
-                   String codeSku) {
+                   String codeSku, AvailabilityEnum availability) {
         this.id = id;
         this.productName = productName;
         this.description = description;
@@ -65,5 +71,6 @@ public class Product {
         this.stockQuantity = stockQuantity;
         this.minimumQuantity = minimumQuantity;
         this.codeSku = codeSku;
+        this.availability = availability;
     }
 }

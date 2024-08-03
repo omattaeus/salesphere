@@ -1,5 +1,6 @@
 package com.salesphere.salesphere.models.dto;
 
+import com.salesphere.salesphere.models.enums.AvailabilityEnum;
 import com.salesphere.salesphere.models.enums.CategoryEnum;
 
 public record ProductResponseDTO(String productName,
@@ -10,5 +11,6 @@ public record ProductResponseDTO(String productName,
                                  Double salePrice,
                                  Long stockQuantity,
                                  Long minimumQuantity,
-                                 String codeSKU) {
+                                 String codeSKU,
+                                 AvailabilityEnum availability) {
 }
