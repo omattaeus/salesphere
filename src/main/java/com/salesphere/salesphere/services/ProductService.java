@@ -31,14 +31,15 @@ public class ProductService {
     }
 
     public ProductResponseDTO createProduct(ProductRequestDTO productRequestDTO) {
-        Product product = productMapper.toProduct(productRequestDTO);
-        Product savedProduct = repository.save(product);
-        return productMapper.toProductResponse(savedProduct);
+        Product newProduct = productMapper.toProduct(productRequestDTO);
+        Product persistedProduct = repository.save(newProduct);
+        return productMapper.toProductResponse(persistedProduct);
     }
 
+
     public List<Product> getProductsWithLowStock() {
-        List<Product> allProducts = repository.findAll();
-        return allProducts.stream()
+        List<Product> products = repository.findAll();
+        return products.stream()
                 .filter(product -> product.getStockQuantity() < product.getMinimumQuantity())
                 .collect(Collectors.toList());
     }

@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RequestMapping(value = "/product")
+@RequestMapping(value = "/products")
 @RestController
 public class ProductController {
 
@@ -18,11 +18,11 @@ public class ProductController {
         this.productService = productService;
     }
 
-    @GetMapping(value = "/get-all")
-    public List<ProductResponseDTO> getProduct() {
-        return productService.getAllProducts();
+    @GetMapping
+    public List<ProductResponseDTO> handleGetAllProducts() {
+        List<ProductResponseDTO> productList = productService.getAllProducts();
+        return productList;
     }
-
 
     @GetMapping("/low-stock")
     public List<Product> getProductsWithLowStock() {
@@ -34,9 +34,9 @@ public class ProductController {
         productService.checkStock();
     }
 
-    @PostMapping(value = "/create")
-    public ProductResponseDTO createProduct(@RequestBody ProductRequestDTO productRequestDTO){
-        ProductResponseDTO create = productService.createProduct(productRequestDTO);
-        return create;
+    @PostMapping
+    public ProductResponseDTO handleCreateProduct(@RequestBody ProductRequestDTO productRequestDTO) {
+        ProductResponseDTO productResponse = productService.createProduct(productRequestDTO);
+        return productResponse;
     }
 }
