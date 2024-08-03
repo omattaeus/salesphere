@@ -18,6 +18,7 @@ public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
     @NotNull(message = "O nome do produto não pode estar vazio!")
@@ -25,22 +26,27 @@ public class Product {
     private String productName;
 
     @NotNull(message = "Descrição não pode estar vazia!")
-    @Column(length = 100)
+    @Column(name = "description", length = 100)
     private String description;
 
     @NotNull(message = "A marca não pode estar vazia!")
+    @Column(name = "brand")
     private String brand;
 
     @NotNull(message = "O preço de compra não pode estar vazio!")
+    @Column(name = "purchase_price")
     private Double purchasePrice;
 
     @NotNull(message = "O preço de venda não pode estar vazio!")
+    @Column(name = "sale_price")
     private Double salePrice;
 
     @NotNull(message = "A quantidade em estoque não pode estar vazia!")
+    @Column(name = "stock_quantity")
     private Long stockQuantity;
 
     @NotNull(message = "A quantidade mínima em estoque não pode estar vazia!")
+    @Column(name = "minimum_quantity")
     private Long minimumQuantity;
 
     @NotNull(message = "Código SKU não pode estar vazio!")

@@ -44,13 +44,13 @@ public class ProductService {
     }
 
     public void checkStock() {
-        List<Product> productsWithStockLow = getProductsWithLowStock();
-        for (Product product : productsWithStockLow) {
+        List<Product> productsWithLowStock = getProductsWithLowStock();
+        for (Product product : productsWithLowStock) {
             sendLowStockAlert(product);
         }
     }
 
     private void sendLowStockAlert(Product product) {
-        //TODO: Implementação da lógica de envio de alerta, por exemplo, email ou notificação
+        // TODO: Implementação da lógica de envio de alerta, por exemplo, email ou notificação
     }
 }
