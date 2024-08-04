@@ -10,7 +10,7 @@ spring:
       ddl-auto: update
     show-sql: true
   mail:
-    host: smtp.example.com
+    host: smtp.gmail.com
     port: 587
     username: ${EMAIL_USER}
     password: ${EMAIL_PASSWORD}
@@ -20,4 +20,3 @@ spring:
           auth: true
           starttls:
             enable: true
-

@@ -4,7 +4,10 @@ import com.salesphere.salesphere.models.Product;
 import com.salesphere.salesphere.models.dto.ProductRequestDTO;
 import com.salesphere.salesphere.models.dto.ProductResponseDTO;
 import com.salesphere.salesphere.services.ProductService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -26,12 +29,21 @@ public class ProductController {
 
     @GetMapping("/low-stock")
     public List<Product> getProductsWithLowStock() {
-        return productService.getProductsWithLowStock();
+        List<Product> lowStockProducts = productService.getProductsWithLowStock();
+        if (lowStockProducts.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Nenhum produto com estoque baixo.");
+        }
+        return lowStockProducts;
     }
 
     @GetMapping("/check-stock")
-    public void checkStock() {
-        productService.checkStock();
+    public ResponseEntity<String> checkStock() {
+        boolean hasLowStock = productService.checkStock();
+        if (!hasLowStock) {
+            return ResponseEntity.ok("Nenhum produto com estoque baixo.");
+        } else {
+            return ResponseEntity.ok("Alerta de estoque baixo enviado por e-mail.");
+        }
     }
 
     @PostMapping

@@ -48,25 +48,31 @@ public class ProductService {
         return repository.findProductsWithLowStock();
     }
 
-    public void checkStock() {
+    public boolean checkStock() {
         List<Product> productsWithLowStock = getProductsWithLowStock();
         if (productsWithLowStock.isEmpty()) {
-            System.out.println("Nenhum produto com estoque baixo.");
+            return false;
         } else {
-            for (Product product : productsWithLowStock) {
-                sendLowStockAlert(product);
-            }
+            sendLowStockAlert(productsWithLowStock);
+            return true;
         }
     }
 
-    public void sendLowStockAlert(Product product) {
+    public void sendLowStockAlert(List<Product> products) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo("qualquercoisa479@gmail.com");
         message.setSubject("Alerta de Estoque Baixo");
-        message.setText("O produto " + product.getProductName() + " está com estoque baixo.\n" +
-                "Quantidade em estoque: " + product.getStockQuantity() + "\n" +
-                "Quantidade mínima: " + product.getMinimumQuantity());
 
+        StringBuilder messageText = new StringBuilder();
+        messageText.append("Os seguintes produtos estão com estoque baixo:\n\n");
+
+        for (Product product : products) {
+            messageText.append("Produto: ").append(product.getProductName()).append("\n")
+                    .append("Quantidade em estoque: ").append(product.getStockQuantity()).append("\n")
+                    .append("Quantidade mínima: ").append(product.getMinimumQuantity()).append("\n\n");
+        }
+
+        message.setText(messageText.toString());
         mailSender.send(message);
     }
 }

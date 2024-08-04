@@ -22,8 +22,7 @@ import java.util.Collections;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ProductController.class)
 public class ProductControllerTest {
@@ -35,7 +34,7 @@ public class ProductControllerTest {
     private ProductService productService;
 
     @Test
-    @DisplayName("You must return all products successfully")
+    @DisplayName("Should return all products successfully")
     public void shouldReturnAllProducts() throws Exception {
         ProductResponseDTO productResponseDTO = new ProductResponseDTO(
                 "Camiseta Puma", "Camiseta esportiva de algodão", "Puma",
@@ -52,7 +51,7 @@ public class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("Must return low stock products successfully")
+    @DisplayName("Should return low stock products successfully")
     public void shouldReturnProductsWithLowStock() throws Exception {
         Product productLowStock = new Product();
         productLowStock.setStockQuantity(3L);
@@ -71,9 +70,9 @@ public class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("Must perform stock check successfully")
+    @DisplayName("Should perform stock check successfully")
     public void shouldCheckStock() throws Exception {
-        doNothing().when(productService).checkStock();
+        when(productService.checkStock()).thenReturn(true);
 
         mockMvc.perform(get("/products/check-stock")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -83,7 +82,21 @@ public class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("Deve criar um produto com sucesso")
+    @DisplayName("Should return no low stock products message")
+    public void shouldReturnNoLowStockMessage() throws Exception {
+        when(productService.checkStock()).thenReturn(false);
+
+        mockMvc.perform(get("/products/check-stock")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Nenhum produto com estoque baixo."));
+
+        verify(productService, times(1)).checkStock();
+    }
+
+
+    @Test
+    @DisplayName("Should create a product successfully")
     public void shouldCreateProduct() throws Exception {
         ProductRequestDTO productRequestDTO = new ProductRequestDTO(
                 "Camiseta Puma", "Camiseta esportiva de algodão", "Puma",
@@ -108,10 +121,10 @@ public class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("It should return an error when trying to create an invalid product")
+    @DisplayName("Should return error when trying to create an invalid product")
     public void shouldReturnErrorForInvalidProduct() throws Exception {
         ProductRequestDTO invalidProductRequestDTO = new ProductRequestDTO(
-                "", "", "", // Valores inválidos
+                "", "", "", // Invalid values
                 null, 0.00, 0.00, 0L, 0L,
                 "", null
         );

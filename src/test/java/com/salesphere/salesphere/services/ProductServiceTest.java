@@ -17,11 +17,11 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
@@ -45,7 +45,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    @DisplayName("You must return all products when there are products registered")
+    @DisplayName("You must return all products when there are registered products")
     public void shouldReturnAllProducts() {
 
         Category shoesCategory = new Category();
@@ -125,19 +125,16 @@ public class ProductServiceTest {
     public void shouldReturnProductsWithLowStock() {
 
         Product productLowStock = new Product();
+        productLowStock.setProductName("Tênis Nike Air Max");
         productLowStock.setStockQuantity(3L);
         productLowStock.setMinimumQuantity(5L);
 
-        Product productNormalStock = new Product();
-        productNormalStock.setStockQuantity(10L);
-        productNormalStock.setMinimumQuantity(5L);
-
-        when(repository.findProductsWithLowStock()).thenReturn(Arrays.asList(productLowStock));
+        when(repository.findProductsWithLowStock()).thenReturn(Collections.singletonList(productLowStock));
 
         List<Product> result = productService.getProductsWithLowStock();
 
-        assertEquals(1, result.size(), "Expected one product with low stock");
-        assertTrue(result.contains(productLowStock), "Expected productLowStock to be in the result");
+        assertEquals(1, result.size(), "Esperado um produto com estoque baixo");
+        assertTrue(result.contains(productLowStock), "Esperado que productLowStock esteja no resultado");
     }
 
     @Test
@@ -149,16 +146,36 @@ public class ProductServiceTest {
         productLowStock.setStockQuantity(3L);
         productLowStock.setMinimumQuantity(5L);
 
-        Product productNormalStock = new Product();
-        productNormalStock.setProductName("Normal Stock Product");
-        productNormalStock.setStockQuantity(10L);
-        productNormalStock.setMinimumQuantity(5L);
-
-        when(repository.findProductsWithLowStock()).thenReturn(Arrays.asList(productLowStock));
+        when(repository.findProductsWithLowStock()).thenReturn(Collections.singletonList(productLowStock));
 
         productService.checkStock();
 
         verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
     }
 
+    @Test
+    @DisplayName("Should return false when there are no products with low stock")
+    public void shouldReturnFalseWhenNoLowStockProducts() {
+        when(repository.findProductsWithLowStock()).thenReturn(Collections.emptyList());
+
+        boolean result = productService.checkStock();
+
+        assertFalse(result, "Esperado que o resultado seja falso quando não houver produtos com estoque baixo");
+        verify(mailSender, never()).send(any(SimpleMailMessage.class));
+    }
+
+    @Test
+    @DisplayName("Should return true when there are products with low stock")
+    public void shouldReturnTrueWhenLowStockProducts() {
+        Product productLowStock = new Product();
+        productLowStock.setProductName("Low Stock Product");
+        productLowStock.setStockQuantity(3L);
+        productLowStock.setMinimumQuantity(5L);
+
+        when(repository.findProductsWithLowStock()).thenReturn(Collections.singletonList(productLowStock));
+
+        boolean result = productService.checkStock();
+
+        assertTrue(result, "Esperado que o resultado seja verdadeiro quando houver produtos com estoque baixo");
+    }
 }
