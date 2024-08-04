@@ -9,6 +9,8 @@ import com.salesphere.salesphere.repositories.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 public class ProductMapper {
 
@@ -56,5 +58,26 @@ public class ProductMapper {
                 product.getCodeSku(),
                 product.getAvailability()
         );
+    }
+
+    private void updateCategory(ProductRequestDTO dto, Product product) {
+        Optional.ofNullable(dto.category()).ifPresent(categoryEnum -> {
+            Category category = categoryRepository.findByCategoryEnum(categoryEnum)
+                    .orElseThrow(() -> new IllegalArgumentException("Categoria não encontrada"));
+            product.setCategory(category);
+        });
+    }
+
+    public void updateProductFromDto(ProductRequestDTO dto, Product product) {
+        Optional.ofNullable(dto.productName()).ifPresent(product::setProductName);
+        Optional.ofNullable(dto.description()).ifPresent(product::setDescription);
+        Optional.ofNullable(dto.brand()).ifPresent(product::setBrand);
+        updateCategory(dto, product);
+        Optional.ofNullable(dto.purchasePrice()).ifPresent(product::setPurchasePrice);
+        Optional.ofNullable(dto.salePrice()).ifPresent(product::setSalePrice);
+        Optional.ofNullable(dto.stockQuantity()).ifPresent(product::setStockQuantity);
+        Optional.ofNullable(dto.minimumQuantity()).ifPresent(product::setMinimumQuantity);
+        Optional.ofNullable(dto.codeSKU()).ifPresent(product::setCodeSku);
+        Optional.ofNullable(dto.availability()).ifPresent(product::setAvailability);
     }
 }

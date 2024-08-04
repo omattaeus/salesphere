@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 @RequestMapping(value = "/products")
 @RestController
@@ -50,5 +51,15 @@ public class ProductController {
     public ProductResponseDTO handleCreateProduct(@RequestBody ProductRequestDTO productRequestDTO) {
         ProductResponseDTO productResponse = productService.createProduct(productRequestDTO);
         return productResponse;
+    }
+
+    @PutMapping("/{productId}")
+    public ProductResponseDTO handleUpdateProduct(@PathVariable("productId") Long productId, @RequestBody ProductRequestDTO productRequestDTO) {
+        return productService.updateProduct(productId, productRequestDTO);
+    }
+
+    @PatchMapping("/{productId}")
+    public ProductResponseDTO handlePartialUpdateProduct(@PathVariable("productId") Long productId, @RequestBody Map<String, Object> updates) {
+        return productService.partialUpdateProduct(productId, updates);
     }
 }

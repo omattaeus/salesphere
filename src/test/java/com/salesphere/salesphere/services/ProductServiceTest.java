@@ -16,13 +16,13 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class ProductServiceTest {
@@ -45,7 +45,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    @DisplayName("You must return all products when there are registered products")
+    @DisplayName("You must return all products when there are products registered")
     public void shouldReturnAllProducts() {
 
         Category shoesCategory = new Category();
@@ -80,7 +80,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    @DisplayName("You must create a new product when the data is valid")
+    @DisplayName("Must create a new product when the data is valid")
     public void shouldCreateProduct() {
 
         ProductRequestDTO productRequestDTO = new ProductRequestDTO(
@@ -138,11 +138,11 @@ public class ProductServiceTest {
     }
 
     @Test
-    @DisplayName("Should send low stock alert for products with quantities below the minimum")
+    @DisplayName("Must send low stock alert for products with quantities below the minimum")
     public void shouldSendLowStockAlertForLowStockProducts() throws Exception {
 
         Product productLowStock = new Product();
-        productLowStock.setProductName("Low Stock Product");
+        productLowStock.setProductName("Produto com Baixo Estoque");
         productLowStock.setStockQuantity(3L);
         productLowStock.setMinimumQuantity(5L);
 
@@ -154,7 +154,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    @DisplayName("Should return false when there are no products with low stock")
+    @DisplayName("Should return false when there are no products in low stock")
     public void shouldReturnFalseWhenNoLowStockProducts() {
         when(repository.findProductsWithLowStock()).thenReturn(Collections.emptyList());
 
@@ -168,7 +168,7 @@ public class ProductServiceTest {
     @DisplayName("Should return true when there are products with low stock")
     public void shouldReturnTrueWhenLowStockProducts() {
         Product productLowStock = new Product();
-        productLowStock.setProductName("Low Stock Product");
+        productLowStock.setProductName("Produto com Baixo Estoque");
         productLowStock.setStockQuantity(3L);
         productLowStock.setMinimumQuantity(5L);
 
@@ -177,5 +177,93 @@ public class ProductServiceTest {
         boolean result = productService.checkStock();
 
         assertTrue(result, "Esperado que o resultado seja verdadeiro quando houver produtos com estoque baixo");
+    }
+
+    @Test
+    @DisplayName("You must update an existing product with valid data")
+    public void shouldUpdateProduct() {
+        Long productId = 1L;
+
+        ProductRequestDTO productRequestDTO = new ProductRequestDTO(
+                "Camiseta Puma", "Camiseta esportiva de algodão", "Puma",
+                CategoryEnum.MALE, 55.00, 85.00, 35L, 5L,
+                "PUMA123", AvailabilityEnum.AVAILABLE
+        );
+
+        Category maleCategory = new Category();
+        maleCategory.setCategoryEnum(CategoryEnum.MALE);
+        maleCategory.setId(1L);
+
+        Product existingProduct = new Product();
+        existingProduct.setId(productId);
+        existingProduct.setProductName("Camiseta Puma");
+        existingProduct.setDescription("Camiseta esportiva de algodão");
+        existingProduct.setBrand("Puma");
+        existingProduct.setCategory(maleCategory);
+        existingProduct.setPurchasePrice(50.00);
+        existingProduct.setSalePrice(80.00);
+        existingProduct.setStockQuantity(30L);
+        existingProduct.setMinimumQuantity(5L);
+        existingProduct.setCodeSku("PUMA123");
+        existingProduct.setAvailability(AvailabilityEnum.AVAILABLE);
+
+        ProductResponseDTO updatedProductResponseDTO = new ProductResponseDTO(
+                "Camiseta Puma", "Camiseta esportiva de algodão", "Puma",
+                CategoryEnum.MALE, 55.00, 85.00, 35L, 5L,
+                "PUMA123", AvailabilityEnum.AVAILABLE
+        );
+
+        when(repository.findById(productId)).thenReturn(Optional.of(existingProduct));
+        doAnswer(invocation -> {
+            ProductRequestDTO dto = invocation.getArgument(0);
+            Product product = invocation.getArgument(1);
+
+            product.setProductName(dto.productName());
+            product.setDescription(dto.description());
+            product.setBrand(dto.brand());
+            product.setPurchasePrice(dto.purchasePrice());
+            product.setSalePrice(dto.salePrice());
+            product.setStockQuantity(dto.stockQuantity());
+            product.setMinimumQuantity(dto.minimumQuantity());
+            product.setCodeSku(dto.codeSKU());
+            product.setAvailability(dto.availability());
+
+            return null;
+        }).when(productMapper).updateProductFromDto(eq(productRequestDTO), eq(existingProduct));
+        when(repository.save(existingProduct)).thenReturn(existingProduct);
+        when(productMapper.toProductResponse(existingProduct)).thenReturn(updatedProductResponseDTO);
+
+        ProductResponseDTO result = productService.updateProduct(productId, productRequestDTO);
+
+        assertEquals(updatedProductResponseDTO, result);
+        assertEquals(productRequestDTO.productName(), existingProduct.getProductName());
+        assertEquals(productRequestDTO.description(), existingProduct.getDescription());
+        assertEquals(productRequestDTO.brand(), existingProduct.getBrand());
+        assertEquals(productRequestDTO.purchasePrice(), existingProduct.getPurchasePrice());
+        assertEquals(productRequestDTO.salePrice(), existingProduct.getSalePrice());
+        assertEquals(productRequestDTO.stockQuantity(), existingProduct.getStockQuantity());
+        assertEquals(productRequestDTO.minimumQuantity(), existingProduct.getMinimumQuantity());
+        assertEquals(productRequestDTO.codeSKU(), existingProduct.getCodeSku());
+        assertEquals(productRequestDTO.availability(), existingProduct.getAvailability());
+    }
+
+    @Test
+    @DisplayName("Should throw ResponseStatusException when trying to update a non-existent product")
+    public void shouldThrowResponseStatusExceptionWhenUpdatingNonExistentProduct() {
+        Long nonExistentProductId = 999L;
+
+        ProductRequestDTO productRequestDTO = new ProductRequestDTO(
+                "Camiseta Puma", "Camiseta esportiva de algodão", "Puma",
+                CategoryEnum.MALE, 55.00, 85.00, 35L, 5L,
+                "PUMA123", AvailabilityEnum.AVAILABLE
+        );
+
+        when(repository.findById(nonExistentProductId)).thenReturn(Optional.empty());
+
+        assertThrows(ResponseStatusException.class, () -> {
+            productService.updateProduct(nonExistentProductId, productRequestDTO);
+        });
+
+        verify(repository, never()).save(any());
     }
 }

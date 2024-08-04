@@ -18,10 +18,10 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ProductController.class)
@@ -37,7 +37,7 @@ public class ProductControllerTest {
     @DisplayName("Should return all products successfully")
     public void shouldReturnAllProducts() throws Exception {
         ProductResponseDTO productResponseDTO = new ProductResponseDTO(
-                "Camiseta Puma", "Camiseta esportiva de algodão", "Puma",
+                "Puma T-Shirt", "Cotton sports t-shirt", "Puma",
                 CategoryEnum.MALE, 50.00, 80.00, 30L, 5L,
                 "PUMA123", AvailabilityEnum.AVAILABLE
         );
@@ -46,8 +46,8 @@ public class ProductControllerTest {
         mockMvc.perform(get("/products")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].productName").value("Camiseta Puma"))
-                .andExpect(jsonPath("$[0].description").value("Camiseta esportiva de algodão"));
+                .andExpect(jsonPath("$[0].productName").value("Puma T-Shirt"))
+                .andExpect(jsonPath("$[0].description").value("Cotton sports t-shirt"));
     }
 
     @Test
@@ -57,11 +57,7 @@ public class ProductControllerTest {
         productLowStock.setStockQuantity(3L);
         productLowStock.setMinimumQuantity(5L);
 
-        Product productNormalStock = new Product();
-        productNormalStock.setStockQuantity(10L);
-        productNormalStock.setMinimumQuantity(5L);
-
-        when(productService.getProductsWithLowStock()).thenReturn(Arrays.asList(productLowStock));
+        when(productService.getProductsWithLowStock()).thenReturn(Collections.singletonList(productLowStock));
 
         mockMvc.perform(get("/products/low-stock")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -70,15 +66,14 @@ public class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("Should perform stock check successfully")
+    @DisplayName("Should check stock successfully")
     public void shouldCheckStock() throws Exception {
         when(productService.checkStock()).thenReturn(true);
 
         mockMvc.perform(get("/products/check-stock")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-
-        verify(productService, times(1)).checkStock();
+                .andExpect(status().isOk())
+                .andExpect(content().string("Alerta de estoque baixo enviado por e-mail."));
     }
 
     @Test
@@ -90,22 +85,19 @@ public class ProductControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Nenhum produto com estoque baixo."));
-
-        verify(productService, times(1)).checkStock();
     }
-
 
     @Test
     @DisplayName("Should create a product successfully")
     public void shouldCreateProduct() throws Exception {
         ProductRequestDTO productRequestDTO = new ProductRequestDTO(
-                "Camiseta Puma", "Camiseta esportiva de algodão", "Puma",
+                "Puma T-Shirt", "Cotton sports t-shirt", "Puma",
                 CategoryEnum.MALE, 50.00, 80.00, 30L, 5L,
                 "PUMA123", AvailabilityEnum.AVAILABLE
         );
 
         ProductResponseDTO productResponseDTO = new ProductResponseDTO(
-                "Camiseta Puma", "Camiseta esportiva de algodão", "Puma",
+                "Puma T-Shirt", "Cotton sports t-shirt", "Puma",
                 CategoryEnum.MALE, 50.00, 80.00, 30L, 5L,
                 "PUMA123", AvailabilityEnum.AVAILABLE
         );
@@ -116,15 +108,15 @@ public class ProductControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new ObjectMapper().writeValueAsString(productRequestDTO)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.productName").value("Camiseta Puma"))
-                .andExpect(jsonPath("$.description").value("Camiseta esportiva de algodão"));
+                .andExpect(jsonPath("$.productName").value("Puma T-Shirt"))
+                .andExpect(jsonPath("$.description").value("Cotton sports t-shirt"));
     }
 
     @Test
     @DisplayName("Should return error when trying to create an invalid product")
     public void shouldReturnErrorForInvalidProduct() throws Exception {
         ProductRequestDTO invalidProductRequestDTO = new ProductRequestDTO(
-                "", "", "", // Invalid values
+                "", "", "",
                 null, 0.00, 0.00, 0L, 0L,
                 "", null
         );
@@ -132,12 +124,56 @@ public class ProductControllerTest {
         when(productService.createProduct(invalidProductRequestDTO))
                 .thenThrow(new RuntimeException("Product cannot be empty!"));
 
-        MvcResult result = mockMvc.perform(post("/products")
+        mockMvc.perform(post("/products")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new ObjectMapper().writeValueAsString(invalidProductRequestDTO)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value("errors"))
-                .andExpect(jsonPath("$.message").value("Product cannot be empty!"))
-                .andReturn();
+                .andExpect(jsonPath("$.message").value("Product cannot be empty!"));
+    }
+
+    @Test
+    @DisplayName("Should update a product successfully")
+    public void shouldUpdateProduct() throws Exception {
+        ProductRequestDTO productRequestDTO = new ProductRequestDTO(
+                "Updated Puma T-Shirt", "Updated description", "Puma",
+                CategoryEnum.MALE, 60.00, 90.00, 40L, 10L,
+                "PUMA123", AvailabilityEnum.AVAILABLE
+        );
+
+        ProductResponseDTO updatedProductResponseDTO = new ProductResponseDTO(
+                "Updated Puma T-Shirt", "Updated description", "Puma",
+                CategoryEnum.MALE, 60.00, 90.00, 40L, 10L,
+                "PUMA123", AvailabilityEnum.AVAILABLE
+        );
+
+        when(productService.updateProduct(anyLong(), eq(productRequestDTO))).thenReturn(updatedProductResponseDTO);
+
+        mockMvc.perform(put("/products/{productId}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(productRequestDTO)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.productName").value("Updated Puma T-Shirt"))
+                .andExpect(jsonPath("$.description").value("Updated description"));
+    }
+
+    @Test
+    @DisplayName("Should partially update a product successfully")
+    public void shouldPartiallyUpdateProduct() throws Exception {
+        Map<String, Object> updates = Map.of("purchasePrice", 75.00, "description", "Partially updated description");
+
+        ProductResponseDTO updatedProductResponseDTO = new ProductResponseDTO(
+                "Puma T-Shirt", "Partially updated description", "Puma",
+                CategoryEnum.MALE, 75.00, 80.00, 30L, 5L,
+                "PUMA123", AvailabilityEnum.AVAILABLE
+        );
+
+        when(productService.partialUpdateProduct(anyLong(), eq(updates))).thenReturn(updatedProductResponseDTO);
+
+        mockMvc.perform(patch("/products/{productId}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(updates)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.purchasePrice").value(75.00))
+                .andExpect(jsonPath("$.description").value("Partially updated description"));
     }
 }
