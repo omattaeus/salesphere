@@ -33,20 +33,23 @@ public class ProductRepositoryTest {
 
         Product product1 = new Product(
                 null, "Product1", "Description1", "Brand1",
-                category, 100.00, 150.00, 5L, 10L,
-                "SKU001", AvailabilityEnum.AVAILABLE
+                100.00, 150.00, 5L, 10L,  // Ordens e tipos corretos
+                "SKU001", category,  // Mova category para a posição correta
+                AvailabilityEnum.AVAILABLE
         );
 
         Product product2 = new Product(
                 null, "Product2", "Description2", "Brand2",
-                category, 200.00, 250.00, 15L, 20L,
-                "SKU002", AvailabilityEnum.OUT_OF_STOCK
+                200.00, 250.00, 15L, 20L,
+                "SKU002", category,
+                AvailabilityEnum.OUT_OF_STOCK
         );
 
         Product product3 = new Product(
                 null, "Product3", "Description3", "Brand3",
-                category, 300.00, 350.00, 25L, 20L,
-                "SKU003", AvailabilityEnum.AVAILABLE
+                300.00, 350.00, 25L, 20L,
+                "SKU003", category,
+                AvailabilityEnum.AVAILABLE
         );
 
         productRepository.save(product1);

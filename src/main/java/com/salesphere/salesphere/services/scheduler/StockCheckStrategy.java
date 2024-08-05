@@ -1,2 +1,5 @@
-package com.salesphere.salesphere.services.scheduler;public interface StockCheckStrategy {
+package com.salesphere.salesphere.services.scheduler;
+
+public interface StockCheckStrategy {
+    void checkStock();
 }

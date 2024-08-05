@@ -7,16 +7,17 @@ import com.salesphere.salesphere.models.dto.ProductResponseDTO;
 import com.salesphere.salesphere.models.enums.AvailabilityEnum;
 import com.salesphere.salesphere.models.enums.CategoryEnum;
 import com.salesphere.salesphere.services.ProductService;
+import com.salesphere.salesphere.services.email.EmailService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
@@ -32,6 +33,12 @@ public class ProductControllerTest {
 
     @MockBean
     private ProductService productService;
+
+    @MockBean
+    private EmailService emailService;
+
+    @Autowired
+    private ProductController productController;
 
     @Test
     @DisplayName("Should return all products successfully")
@@ -53,9 +60,11 @@ public class ProductControllerTest {
     @Test
     @DisplayName("Should return low stock products successfully")
     public void shouldReturnProductsWithLowStock() throws Exception {
-        Product productLowStock = new Product();
-        productLowStock.setStockQuantity(3L);
-        productLowStock.setMinimumQuantity(5L);
+        ProductResponseDTO productLowStock = new ProductResponseDTO(
+                "Low Stock Product", "Description", "Brand",
+                CategoryEnum.MALE, 50.00, 80.00, 3L, 5L,
+                "SKU123", AvailabilityEnum.AVAILABLE
+        );
 
         when(productService.getProductsWithLowStock()).thenReturn(Collections.singletonList(productLowStock));
 
@@ -66,26 +75,56 @@ public class ProductControllerTest {
     }
 
     @Test
+    @DisplayName("Should return no content when no low stock products")
+    public void shouldReturnNoContentWhenNoLowStockProducts() throws Exception {
+        when(productService.getProductsWithLowStock()).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/products/low-stock")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
     @DisplayName("Should check stock successfully")
     public void shouldCheckStock() throws Exception {
-        when(productService.checkStock()).thenReturn(true);
+        when(productService.getRawProductsWithLowStock()).thenReturn(Collections.singletonList(new Product()));
 
         mockMvc.perform(get("/products/check-stock")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Alerta de estoque baixo enviado por e-mail."));
+
+        verify(productService).getRawProductsWithLowStock();
+        verify(emailService).sendLowStockAlert(any());
     }
 
     @Test
-    @DisplayName("Should return no low stock products message")
+    @DisplayName("Should send low stock alert when products are low in stock")
+    public void shouldSendLowStockAlert() throws Exception {
+        Product productWithLowStock = new Product();
+        when(productService.getRawProductsWithLowStock()).thenReturn(Collections.singletonList(productWithLowStock));
+
+        mockMvc.perform(get("/products/check-stock")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Alerta de estoque baixo enviado por e-mail."));
+
+        verify(emailService).sendLowStockAlert(Collections.singletonList(productWithLowStock));
+    }
+
+    @Test
+    @DisplayName("Should return no low stock message when no products are low in stock")
     public void shouldReturnNoLowStockMessage() throws Exception {
-        when(productService.checkStock()).thenReturn(false);
+        when(productService.getRawProductsWithLowStock()).thenReturn(Collections.emptyList());
 
         mockMvc.perform(get("/products/check-stock")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Nenhum produto com estoque baixo."));
+
+        verify(emailService, never()).sendLowStockAlert(any());
     }
+
 
     @Test
     @DisplayName("Should create a product successfully")
@@ -107,7 +146,7 @@ public class ProductControllerTest {
         mockMvc.perform(post("/products")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new ObjectMapper().writeValueAsString(productRequestDTO)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.productName").value("Puma T-Shirt"))
                 .andExpect(jsonPath("$.description").value("Cotton sports t-shirt"));
     }
@@ -175,5 +214,30 @@ public class ProductControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.purchasePrice").value(75.00))
                 .andExpect(jsonPath("$.description").value("Partially updated description"));
+    }
+
+    @Test
+    @DisplayName("Should delete a product successfully")
+    public void shouldDeleteProduct() throws Exception {
+        Long productId = 1L;
+
+        doNothing().when(productService).deleteProduct(productId);
+
+        mockMvc.perform(delete("/products/{productId}", productId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("Should return not found when trying to delete a non-existent product")
+    public void shouldReturnNotFoundWhenDeletingNonExistentProduct() throws Exception {
+        Long productId = 1L;
+
+        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto não encontrado"))
+                .when(productService).deleteProduct(productId);
+
+        mockMvc.perform(delete("/products/{productId}", productId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
     }
 }

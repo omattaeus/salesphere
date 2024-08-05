@@ -14,37 +14,35 @@ import java.util.Optional;
 @Component
 public class ProductMapper {
 
+    private final CategoryRepository categoryRepository;
+
     @Autowired
-    private CategoryRepository categoryRepository;
+    public ProductMapper(CategoryRepository categoryRepository) {
+        this.categoryRepository = categoryRepository;
+    }
 
     public Product toProduct(ProductRequestDTO productRequestDTO) {
-        if (productRequestDTO == null) {
-            throw new IllegalArgumentException("A solicitação não pode ser nula");
-        }
+        validateProductRequestDTO(productRequestDTO);
 
-        CategoryEnum categoryEnum = productRequestDTO.category();
-        Category category = categoryRepository.findByCategoryEnum(categoryEnum)
-                .orElseThrow(() -> new IllegalArgumentException("Categoria não encontrada"));
+        Category category = getCategory(productRequestDTO.category());
 
         return new Product(
                 null,
                 productRequestDTO.productName(),
                 productRequestDTO.description(),
                 productRequestDTO.brand(),
-                category,
                 productRequestDTO.purchasePrice(),
                 productRequestDTO.salePrice(),
                 productRequestDTO.stockQuantity(),
                 productRequestDTO.minimumQuantity(),
                 productRequestDTO.codeSKU(),
+                category,
                 productRequestDTO.availability()
         );
     }
 
     public ProductResponseDTO toProductResponse(Product product) {
-        if (product == null) {
-            throw new IllegalArgumentException("O produto não pode ser nulo");
-        }
+        validateProduct(product);
 
         return new ProductResponseDTO(
                 product.getProductName(),
@@ -60,19 +58,32 @@ public class ProductMapper {
         );
     }
 
-    private void updateCategory(ProductRequestDTO dto, Product product) {
-        Optional.ofNullable(dto.category()).ifPresent(categoryEnum -> {
-            Category category = categoryRepository.findByCategoryEnum(categoryEnum)
-                    .orElseThrow(() -> new IllegalArgumentException("Categoria não encontrada"));
-            product.setCategory(category);
-        });
+    private Category getCategory(CategoryEnum categoryEnum) {
+        return categoryRepository.findByCategoryEnum(categoryEnum)
+                .orElseThrow(() -> new IllegalArgumentException("Categoria não encontrada"));
+    }
+
+    private void validateProductRequestDTO(ProductRequestDTO dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("A solicitação não pode ser nula");
+        }
+    }
+
+    private void validateProduct(Product product) {
+        if (product == null) {
+            throw new IllegalArgumentException("O produto não pode ser nulo");
+        }
     }
 
     public void updateProductFromDto(ProductRequestDTO dto, Product product) {
+        validateProduct(product);
         Optional.ofNullable(dto.productName()).ifPresent(product::setProductName);
         Optional.ofNullable(dto.description()).ifPresent(product::setDescription);
         Optional.ofNullable(dto.brand()).ifPresent(product::setBrand);
-        updateCategory(dto, product);
+        Optional.ofNullable(dto.category()).ifPresent(categoryEnum -> {
+            Category category = getCategory(categoryEnum);
+            product.setCategory(category);
+        });
         Optional.ofNullable(dto.purchasePrice()).ifPresent(product::setPurchasePrice);
         Optional.ofNullable(dto.salePrice()).ifPresent(product::setSalePrice);
         Optional.ofNullable(dto.stockQuantity()).ifPresent(product::setStockQuantity);

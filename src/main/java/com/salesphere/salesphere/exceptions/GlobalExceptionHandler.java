@@ -11,33 +11,32 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     @ResponseBody
-    public ResponseEntity<?> handleRuntimeException(RuntimeException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("errors", ex.getMessage()));
+    public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponseFactory.createErrorResponse("Runtime Error", ex.getMessage()));
+    }
+}
+
+class ErrorResponseFactory {
+    public static ErrorResponse createErrorResponse(String type, String message) {
+        return new ErrorResponse(type, message);
+    }
+}
+
+class ErrorResponse {
+    private String type;
+    private String message;
+
+    public ErrorResponse(String type, String message) {
+        this.type = type;
+        this.message = message;
     }
 
-    public static class ErrorResponse {
-        private String type;
-        private String message;
+    public String getType() {
+        return type;
+    }
 
-        public ErrorResponse(String type, String message) {
-            this.type = type;
-            this.message = message;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public void setType(String type) {
-            this.type = type;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public void setMessage(String message) {
-            this.message = message;
-        }
+    public String getMessage() {
+        return message;
     }
 }

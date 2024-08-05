@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -22,9 +23,30 @@ public class Category {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "category", unique = true, length = 20)
+    @Column(name = "category", unique = true, length = 20, nullable = false)
     private CategoryEnum categoryEnum;
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Product> products;
+    private List<Product> products = new ArrayList<>();
+
+
+    /**
+     * Adiciona um produto à categoria.
+     *
+     * @param product o produto a ser adicionado
+     */
+    public void addProduct(Product product) {
+        products.add(product);
+        product.setCategory(this);
+    }
+
+    /**
+     * Remove um produto da categoria.
+     *
+     * @param product o produto a ser removido
+     */
+    public void removeProduct(Product product) {
+        products.remove(product);
+        product.setCategory(null);
+    }
 }

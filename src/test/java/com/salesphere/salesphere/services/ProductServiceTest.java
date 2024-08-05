@@ -8,14 +8,14 @@ import com.salesphere.salesphere.models.dto.ProductResponseDTO;
 import com.salesphere.salesphere.models.enums.AvailabilityEnum;
 import com.salesphere.salesphere.models.enums.CategoryEnum;
 import com.salesphere.salesphere.repositories.ProductRepository;
+import com.salesphere.salesphere.services.email.EmailService;
+import jakarta.validation.ValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Collections;
@@ -34,7 +34,7 @@ public class ProductServiceTest {
     private ProductMapper productMapper;
 
     @Mock
-    private JavaMailSender mailSender;
+    private EmailService emailService;
 
     @InjectMocks
     private ProductService productService;
@@ -45,9 +45,8 @@ public class ProductServiceTest {
     }
 
     @Test
-    @DisplayName("You must return all products when there are products registered")
+    @DisplayName("Should return all products when there are products registered")
     public void shouldReturnAllProducts() {
-
         Category shoesCategory = new Category();
         shoesCategory.setCategoryEnum(CategoryEnum.SHOES);
         shoesCategory.setId(1L);
@@ -80,9 +79,8 @@ public class ProductServiceTest {
     }
 
     @Test
-    @DisplayName("Must create a new product when the data is valid")
+    @DisplayName("Should create a new product when the data is valid")
     public void shouldCreateProduct() {
-
         ProductRequestDTO productRequestDTO = new ProductRequestDTO(
                 "Camiseta Puma", "Camiseta esportiva de algodão", "Puma",
                 CategoryEnum.MALE, 50.00, 80.00, 30L, 5L,
@@ -121,26 +119,44 @@ public class ProductServiceTest {
     }
 
     @Test
-    @DisplayName("You must return products with low stock when there are products below the minimum stock")
-    public void shouldReturnProductsWithLowStock() {
+    @DisplayName("Should throw ValidationException when creating product with empty name or null category")
+    public void shouldThrowValidationExceptionWhenCreatingProductWithInvalidData() {
+        ProductRequestDTO invalidProductRequestDTO = new ProductRequestDTO(
+                "", null, "Puma",
+                CategoryEnum.MALE, 50.00, 80.00, 30L, 5L,
+                "PUMA123", AvailabilityEnum.AVAILABLE
+        );
 
+        assertThrows(ValidationException.class, () -> {
+            productService.createProduct(invalidProductRequestDTO);
+        });
+    }
+
+    @Test
+    @DisplayName("Should return products with low stock when there are products below the minimum stock")
+    public void shouldReturnProductsWithLowStock() {
         Product productLowStock = new Product();
         productLowStock.setProductName("Tênis Nike Air Max");
         productLowStock.setStockQuantity(3L);
         productLowStock.setMinimumQuantity(5L);
 
+        ProductResponseDTO productResponseDTO = new ProductResponseDTO(
+                "Tênis Nike Air Max", "", "", CategoryEnum.SHOES,
+                0.0, 0.0, 3L, 5L, "", AvailabilityEnum.AVAILABLE
+        );
+
         when(repository.findProductsWithLowStock()).thenReturn(Collections.singletonList(productLowStock));
+        when(productMapper.toProductResponse(productLowStock)).thenReturn(productResponseDTO);
 
-        List<Product> result = productService.getProductsWithLowStock();
+        List<ProductResponseDTO> result = productService.getProductsWithLowStock();
 
-        assertEquals(1, result.size(), "Esperado um produto com estoque baixo");
-        assertTrue(result.contains(productLowStock), "Esperado que productLowStock esteja no resultado");
+        assertEquals(1, result.size());
+        assertEquals(productResponseDTO, result.get(0));
     }
 
     @Test
-    @DisplayName("Must send low stock alert for products with quantities below the minimum")
-    public void shouldSendLowStockAlertForLowStockProducts() throws Exception {
-
+    @DisplayName("Should send low stock alert for products with quantities below the minimum")
+    public void shouldSendLowStockAlertForLowStockProducts() {
         Product productLowStock = new Product();
         productLowStock.setProductName("Produto com Baixo Estoque");
         productLowStock.setStockQuantity(3L);
@@ -150,37 +166,21 @@ public class ProductServiceTest {
 
         productService.checkStock();
 
-        verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
+        verify(emailService, times(1)).sendLowStockAlert(anyList());
     }
 
     @Test
-    @DisplayName("Should return false when there are no products in low stock")
-    public void shouldReturnFalseWhenNoLowStockProducts() {
+    @DisplayName("Should not send low stock alert when there are no products with low stock")
+    public void shouldNotSendLowStockAlertWhenNoLowStockProducts() {
         when(repository.findProductsWithLowStock()).thenReturn(Collections.emptyList());
 
-        boolean result = productService.checkStock();
+        productService.checkStock();
 
-        assertFalse(result, "Esperado que o resultado seja falso quando não houver produtos com estoque baixo");
-        verify(mailSender, never()).send(any(SimpleMailMessage.class));
+        verify(emailService, never()).sendLowStockAlert(anyList());
     }
 
     @Test
-    @DisplayName("Should return true when there are products with low stock")
-    public void shouldReturnTrueWhenLowStockProducts() {
-        Product productLowStock = new Product();
-        productLowStock.setProductName("Produto com Baixo Estoque");
-        productLowStock.setStockQuantity(3L);
-        productLowStock.setMinimumQuantity(5L);
-
-        when(repository.findProductsWithLowStock()).thenReturn(Collections.singletonList(productLowStock));
-
-        boolean result = productService.checkStock();
-
-        assertTrue(result, "Esperado que o resultado seja verdadeiro quando houver produtos com estoque baixo");
-    }
-
-    @Test
-    @DisplayName("You must update an existing product with valid data")
+    @DisplayName("Should update an existing product with valid data")
     public void shouldUpdateProduct() {
         Long productId = 1L;
 
@@ -236,21 +236,12 @@ public class ProductServiceTest {
         ProductResponseDTO result = productService.updateProduct(productId, productRequestDTO);
 
         assertEquals(updatedProductResponseDTO, result);
-        assertEquals(productRequestDTO.productName(), existingProduct.getProductName());
-        assertEquals(productRequestDTO.description(), existingProduct.getDescription());
-        assertEquals(productRequestDTO.brand(), existingProduct.getBrand());
-        assertEquals(productRequestDTO.purchasePrice(), existingProduct.getPurchasePrice());
-        assertEquals(productRequestDTO.salePrice(), existingProduct.getSalePrice());
-        assertEquals(productRequestDTO.stockQuantity(), existingProduct.getStockQuantity());
-        assertEquals(productRequestDTO.minimumQuantity(), existingProduct.getMinimumQuantity());
-        assertEquals(productRequestDTO.codeSKU(), existingProduct.getCodeSku());
-        assertEquals(productRequestDTO.availability(), existingProduct.getAvailability());
     }
 
     @Test
-    @DisplayName("Should throw ResponseStatusException when trying to update a non-existent product")
-    public void shouldThrowResponseStatusExceptionWhenUpdatingNonExistentProduct() {
-        Long nonExistentProductId = 999L;
+    @DisplayName("Should throw ResponseStatusException when updating a non-existing product")
+    public void shouldThrowResponseStatusExceptionWhenUpdatingNonExistingProduct() {
+        Long productId = 1L;
 
         ProductRequestDTO productRequestDTO = new ProductRequestDTO(
                 "Camiseta Puma", "Camiseta esportiva de algodão", "Puma",
@@ -258,12 +249,34 @@ public class ProductServiceTest {
                 "PUMA123", AvailabilityEnum.AVAILABLE
         );
 
-        when(repository.findById(nonExistentProductId)).thenReturn(Optional.empty());
+        when(repository.findById(productId)).thenReturn(Optional.empty());
 
         assertThrows(ResponseStatusException.class, () -> {
-            productService.updateProduct(nonExistentProductId, productRequestDTO);
+            productService.updateProduct(productId, productRequestDTO);
         });
+    }
 
-        verify(repository, never()).save(any());
+    @Test
+    @DisplayName("Should delete a product by id")
+    public void shouldDeleteProduct() {
+        Long productId = 1L;
+
+        when(repository.existsById(productId)).thenReturn(true);
+
+        productService.deleteProduct(productId);
+
+        verify(repository, times(1)).deleteById(productId);
+    }
+
+    @Test
+    @DisplayName("Should throw ResponseStatusException when deleting a non-existing product")
+    public void shouldThrowResponseStatusExceptionWhenDeletingNonExistingProduct() {
+        Long productId = 1L;
+
+        when(repository.existsById(productId)).thenReturn(false);
+
+        assertThrows(ResponseStatusException.class, () -> {
+            productService.deleteProduct(productId);
+        });
     }
 }

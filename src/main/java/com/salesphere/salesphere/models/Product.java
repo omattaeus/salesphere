@@ -12,7 +12,6 @@ import com.salesphere.salesphere.models.enums.AvailabilityEnum;
 @Table(name = "tb_product")
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
 public class Product {
 
@@ -22,35 +21,35 @@ public class Product {
     private Long id;
 
     @NotNull(message = "O nome do produto não pode estar vazio!")
-    @Column(name = "product_name", unique = true)
+    @Column(name = "product_name", unique = true, nullable = false)
     private String productName;
 
     @NotNull(message = "Descrição não pode estar vazia!")
-    @Column(name = "description", length = 100)
+    @Column(name = "description", length = 100, nullable = false)
     private String description;
 
     @NotNull(message = "A marca não pode estar vazia!")
-    @Column(name = "brand")
+    @Column(name = "brand", nullable = false)
     private String brand;
 
     @NotNull(message = "O preço de compra não pode estar vazio!")
-    @Column(name = "purchase_price")
+    @Column(name = "purchase_price", nullable = false)
     private Double purchasePrice;
 
     @NotNull(message = "O preço de venda não pode estar vazio!")
-    @Column(name = "sale_price")
+    @Column(name = "sale_price", nullable = false)
     private Double salePrice;
 
     @NotNull(message = "A quantidade em estoque não pode estar vazia!")
-    @Column(name = "stock_quantity")
+    @Column(name = "stock_quantity", nullable = false)
     private Long stockQuantity;
 
     @NotNull(message = "A quantidade mínima em estoque não pode estar vazia!")
-    @Column(name = "minimum_quantity")
+    @Column(name = "minimum_quantity", nullable = false)
     private Long minimumQuantity;
 
     @NotNull(message = "Código SKU não pode estar vazio!")
-    @Column(name = "code_sku", unique = true)
+    @Column(name = "code_sku", unique = true, nullable = false)
     private String codeSku;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -59,24 +58,23 @@ public class Product {
 
     @NotNull(message = "O status de disponibilidade não pode estar vazio!")
     @Enumerated(EnumType.STRING)
-    @Column(name = "availability")
+    @Column(name = "availability", nullable = false)
     private AvailabilityEnum availability;
 
-    // Construtor com todos os campos necessários
-    public Product(Long id, String productName, String description,
-                   String brand, Category category, Double purchasePrice,
-                   Double salePrice, Long stockQuantity, Long minimumQuantity,
-                   String codeSku, AvailabilityEnum availability) {
+    public Product(Long id, String productName, String description, String brand,
+                   Double purchasePrice, Double salePrice, Long stockQuantity,
+                   Long minimumQuantity, String codeSku, Category category,
+                   AvailabilityEnum availability) {
         this.id = id;
         this.productName = productName;
         this.description = description;
         this.brand = brand;
-        this.category = category;
         this.purchasePrice = purchasePrice;
         this.salePrice = salePrice;
         this.stockQuantity = stockQuantity;
         this.minimumQuantity = minimumQuantity;
         this.codeSku = codeSku;
+        this.category = category;
         this.availability = availability;
     }
 }
