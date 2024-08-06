@@ -45,6 +45,7 @@ public class ProductMapper {
         validateProduct(product);
 
         return new ProductResponseDTO(
+                product.getId(),
                 product.getProductName(),
                 product.getDescription(),
                 product.getBrand(),

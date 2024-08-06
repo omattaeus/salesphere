@@ -1,5 +1,6 @@
 package com.salesphere.salesphere.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -50,6 +51,7 @@ public class Product {
 
     @NotNull(message = "Código SKU não pode estar vazio!")
     @Column(name = "code_sku", unique = true, nullable = false)
+    @JsonProperty(value = "code_sku")
     private String codeSku;
 
     @ManyToOne(fetch = FetchType.LAZY)

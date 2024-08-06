@@ -68,6 +68,7 @@ public class ProductController {
         ProductResponseDTO updatedProduct = productService.partialUpdateProduct(productId, updates);
         return ResponseEntity.ok(updatedProduct);
     }
+
     @DeleteMapping("/{productId}")
     public ResponseEntity<Void> deleteProduct(@PathVariable("productId") Long productId) {
         try {

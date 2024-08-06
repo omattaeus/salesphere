@@ -19,7 +19,7 @@ public class DefaultEmailService implements EmailService {
     @Override
     public void sendLowStockAlert(List<Product> products) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo("qualquercoisa479@gmail.com");
+        message.setTo("contatomateusgd@gmail.com");
         message.setSubject("Alerta de Estoque Baixo");
 
         StringBuilder messageText = new StringBuilder();

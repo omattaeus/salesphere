@@ -5,6 +5,10 @@ import com.salesphere.salesphere.models.Product;
 import com.salesphere.salesphere.models.dto.ProductRequestDTO;
 import com.salesphere.salesphere.models.dto.ProductResponseDTO;
 import com.salesphere.salesphere.repositories.ProductRepository;
+import com.salesphere.salesphere.services.converter.EnumConverter;
+import com.salesphere.salesphere.services.converter.FieldValueConverter;
+import com.salesphere.salesphere.services.converter.LongConverter;
+import com.salesphere.salesphere.services.converter.ProductUpdater;
 import com.salesphere.salesphere.services.email.EmailService;
 import com.salesphere.salesphere.services.scheduler.StockCheckStrategy;
 import jakarta.transaction.Transactional;
@@ -16,6 +20,7 @@ import org.springframework.util.ReflectionUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,14 +31,16 @@ public class ProductService implements StockCheckStrategy {
 
     private final ProductRepository repository;
     private final ProductMapper productMapper;
+    private final ProductUpdater productUpdater;
     private final EmailService emailService;
 
-    @Autowired
-    public ProductService(ProductRepository repository, ProductMapper productMapper,
+    public ProductService(ProductRepository repository,
+                          ProductMapper productMapper,
                           EmailService emailService) {
         this.repository = repository;
         this.productMapper = productMapper;
         this.emailService = emailService;
+        this.productUpdater = createProductUpdater();
     }
 
     public List<ProductResponseDTO> getAllProducts() {
@@ -61,14 +68,24 @@ public class ProductService implements StockCheckStrategy {
         return productMapper.toProductResponse(updatedProduct);
     }
 
+    private ProductUpdater createProductUpdater() {
+        List<FieldValueConverter> converters = List.of(
+                new LongConverter(),
+                new EnumConverter()
+        );
+        return new ProductUpdater(converters);
+    }
+
     @Transactional
     public ProductResponseDTO partialUpdateProduct(Long productId, Map<String, Object> updates) {
         Product existingProduct = repository.findById(productId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto não encontrado"));
 
-        applyUpdates(existingProduct, updates);
+        productUpdater.applyUpdates(existingProduct, updates);
 
         Product updatedProduct = repository.save(existingProduct);
+
+        emailService.sendLowStockAlert(List.of(updatedProduct));
 
         return productMapper.toProductResponse(updatedProduct);
     }
