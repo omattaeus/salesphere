@@ -50,14 +50,12 @@ public class ReportService {
         try (Workbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("Estoque Baixo");
 
-            // Criação do cabeçalho
             Row header = sheet.createRow(0);
             String[] headers = {"Nome do Produto", "Descrição", "Marca", "Categoria", "Preço de Compra", "Preço de Venda", "Quantidade em Estoque", "Quantidade Mínima"};
             for (int i = 0; i < headers.length; i++) {
                 header.createCell(i).setCellValue(headers[i]);
             }
 
-            // Preenchimento dos dados
             int rowNum = 1;
             for (Product product : products) {
                 Row row = sheet.createRow(rowNum++);

@@ -15,12 +15,16 @@ import com.salesphere.salesphere.services.scheduler.StockCheckStrategy;
 import com.salesphere.salesphere.services.websocket.StockWebSocketHandler;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.socket.WebSocketSession;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +32,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class ProductService implements StockCheckStrategy {
+
+    private static final Logger logger = LoggerFactory.getLogger(ProductService.class);
 
     private final ProductRepository repository;
     private final AvailabilityRepository availabilityRepository;
@@ -59,12 +65,17 @@ public class ProductService implements StockCheckStrategy {
 
         return productRequestDTOs.stream()
                 .map(productRequestDTO -> {
-                    Product product = productMapper.toProduct(productRequestDTO);
-                    Availability availability = availabilityRepository.findByAvailability(productRequestDTO.availability())
-                            .orElseThrow(() -> new ValidationException("Disponibilidade não encontrada"));
-                    product.setAvailability(availability);
-                    Product savedProduct = repository.save(product);
-                    return productMapper.toProductResponse(savedProduct);
+                    try {
+                        Product product = productMapper.toProduct(productRequestDTO);
+                        Availability availability = availabilityRepository.findByAvailability(productRequestDTO.availability())
+                                .orElseThrow(() -> new ValidationException("Disponibilidade não encontrada"));
+                        product.setAvailability(availability);
+                        Product savedProduct = repository.save(product);
+                        return productMapper.toProductResponse(savedProduct);
+                    } catch (ValidationException e) {
+                        logger.error("Erro ao criar produto: {}", e.getMessage());
+                        throw e;
+                    }
                 })
                 .collect(Collectors.toList());
     }
@@ -94,18 +105,53 @@ public class ProductService implements StockCheckStrategy {
         return productMapper.toProductResponse(updatedProduct);
     }
 
-    @Transactional
+
     public ProductResponseDTO partialUpdateProduct(Long productId, Map<String, Object> updates) {
         Product existingProduct = repository.findById(productId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto não encontrado"));
 
-        productUpdater.applyUpdates(existingProduct, updates);
+        updates.forEach((key, value) -> {
+            Field field = ReflectionUtils.findField(Product.class, key);
+            if (field != null) {
+                field.setAccessible(true);
+                ReflectionUtils.setField(field, existingProduct, value);
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Campo " + key + " não encontrado");
+            }
+        });
 
+        validateProduct(existingProduct);
         Product updatedProduct = repository.save(existingProduct);
-
-        emailService.sendLowStockAlert(List.of(updatedProduct));
-
         return productMapper.toProductResponse(updatedProduct);
+    }
+
+    @Transactional
+    @Override
+    @Scheduled(cron = "0 0 * * * *")
+    public void checkStock() {
+        List<Product> productsWithLowStock = getRawProductsWithLowStock();
+
+        if (!productsWithLowStock.isEmpty()) {
+            String message = createStockUpdateMessage(productsWithLowStock);
+
+            for (WebSocketSession session : stockWebSocketHandler.getSessions()) {
+                try {
+                    stockWebSocketHandler.sendMessage(session, message);
+                } catch (IOException e) {
+                    logger.error("Erro ao enviar mensagem via WebSocket: {}", e.getMessage());
+                }
+            }
+
+            emailService.sendLowStockAlert(productsWithLowStock);
+        } else {
+            logger.info("Nenhum produto com estoque baixo encontrado.");
+        }
+    }
+
+    private String createStockUpdateMessage(List<Product> productsWithLowStock) {
+        return productsWithLowStock.stream()
+                .map(product -> product.getProductName() + " (Estoque: " + product.getStockQuantity() + ")")
+                .collect(Collectors.joining("\n"));
     }
 
     public List<Product> getRawProductsWithLowStock() {
@@ -119,51 +165,22 @@ public class ProductService implements StockCheckStrategy {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    @Scheduled(cron = "0 0 * * * *")
-    public void checkStock() {
-        List<Product> productsWithLowStock = getRawProductsWithLowStock();
-        if (!productsWithLowStock.isEmpty()) {
-            emailService.sendLowStockAlert(productsWithLowStock);
-            String message = createStockUpdateMessage(productsWithLowStock);
-            try {
-                stockWebSocketHandler.sendStockUpdate(message);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private String createStockUpdateMessage(List<Product> productsWithLowStock) {
-        return "Produtos com estoque baixo: " + productsWithLowStock.stream()
-                .map(product -> product.getProductName() + " (Estoque: " + product.getStockQuantity() + ")")
-                .collect(Collectors.joining(", "));
-    }
-
     public void deleteProduct(Long productId) {
-        if (!repository.existsById(productId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto não encontrado");
+        try {
+            if (!repository.existsById(productId)) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto não encontrado");
+            }
+            repository.deleteById(productId);
+        } catch (ResponseStatusException ex) {
+            logger.error("Erro ao deletar produto: {}", ex.getMessage());
+            throw ex;
         }
-        repository.deleteById(productId);
     }
 
     private void validateProduct(Product product) {
         if (product.getCodeSku() == null || product.getPurchasePrice() == null) {
             throw new IllegalArgumentException("Campos obrigatórios não preenchidos");
         }
-    }
-
-    private void applyUpdates(Product product, Map<String, Object> updates) {
-        updates.forEach((key, value) -> {
-            Field field = ReflectionUtils.findField(Product.class, key);
-            if (field != null) {
-                field.setAccessible(true);
-                if (field.getType() == Long.class && value instanceof Integer) {
-                    value = ((Integer) value).longValue();
-                }
-                ReflectionUtils.setField(field, product, value);
-            }
-        });
     }
 
     private void validateProductRequest(ProductRequestDTO productRequestDTO) {

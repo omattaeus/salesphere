@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        #messages {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 300px;
+            overflow-y: scroll;
+        }
+    </style>
+</head>
+<body>
+<h1>WebSocket Test</h1>
+<div id="messages"></div>
+<button id="sendMessageButton">Send Test Message</button>
+<script>
+    // Conectar ao WebSocket
+    const socket = new WebSocket("ws://localhost:8080/stock-updates");
+
+    socket.onopen = () => {
+        console.log("Conectado ao WebSocket");
+    };
+
+    socket.onmessage = (event) => {
+        console.log("Mensagem recebida:", event.data);
+        document.getElementById("messages").innerHTML += "Mensagem recebida: " + event.data + "<br/>";
+    };
+
+    socket.onclose = () => {
+        console.log("Conexão WebSocket fechada");
+    };
+
+    socket.onerror = (error) => {
+        console.error("Erro WebSocket:", error);
+    };
+
+    // Enviar mensagem através do WebSocket
+    document.getElementById("sendMessageButton").addEventListener("click", () => {
+        const testMessage = "Olá, WebSocket! Mensagem de teste.";
+        console.log("Enviando mensagem:", testMessage);
+        socket.send(testMessage);
+    });
+</script>
+</body>
+</html>

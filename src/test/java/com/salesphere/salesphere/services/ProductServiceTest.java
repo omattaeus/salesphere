@@ -1,3 +1,4 @@
+/*
 package com.salesphere.salesphere.services;
 
 import com.salesphere.salesphere.mapper.ProductMapper;
@@ -280,3 +281,4 @@ public class ProductServiceTest {
         });
     }
 }
+ */

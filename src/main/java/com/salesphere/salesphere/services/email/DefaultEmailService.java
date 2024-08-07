@@ -34,7 +34,6 @@ public class DefaultEmailService implements EmailService {
             String emailContent = buildEmailContent(products);
             messageHelper.setText(emailContent, true); // 'true' indica conteúdo HTML
 
-            // Gerar e anexar relatório PDF
             ByteArrayInputStream pdfReportStream = reportService.generatePdfLowStockReport(products);
             ByteArrayResource pdfReportResource = new ByteArrayResource(pdfReportStream.readAllBytes()) {
                 @Override
@@ -44,7 +43,6 @@ public class DefaultEmailService implements EmailService {
             };
             messageHelper.addAttachment(pdfReportResource.getFilename(), pdfReportResource);
 
-            // Gerar e anexar relatório Excel
             ByteArrayInputStream excelReportStream = reportService.generateExcelLowStockReport(products);
             ByteArrayResource excelReportResource = new ByteArrayResource(excelReportStream.readAllBytes()) {
                 @Override
