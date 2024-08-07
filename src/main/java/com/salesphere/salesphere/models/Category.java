@@ -29,7 +29,6 @@ public class Category {
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Product> products = new ArrayList<>();
 
-
     /**
      * Adiciona um produto à categoria.
      *
@@ -48,5 +47,10 @@ public class Category {
     public void removeProduct(Product product) {
         products.remove(product);
         product.setCategory(null);
+    }
+
+    @Override
+    public String toString() {
+        return categoryEnum != null ? categoryEnum.toString() : "N/A";
     }
 }
