@@ -1,12 +1,14 @@
 package com.salesphere.salesphere.services.converter;
 
 import com.salesphere.salesphere.models.Product;
+import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.List;
 
+@Component
 public class ProductUpdater {
 
     private final List<FieldValueConverter> converters;

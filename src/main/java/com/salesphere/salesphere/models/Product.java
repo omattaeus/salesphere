@@ -3,11 +3,9 @@ package com.salesphere.salesphere.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import com.salesphere.salesphere.models.enums.AvailabilityEnum;
 
 @Entity
 @Table(name = "tb_product")
@@ -58,15 +56,14 @@ public class Product {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    @NotNull(message = "O status de disponibilidade não pode estar vazio!")
-    @Enumerated(EnumType.STRING)
-    @Column(name = "availability", nullable = false)
-    private AvailabilityEnum availability;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "availability_id", nullable = false)
+    private Availability availability;
 
     public Product(Long id, String productName, String description, String brand,
                    Double purchasePrice, Double salePrice, Long stockQuantity,
                    Long minimumQuantity, String codeSku, Category category,
-                   AvailabilityEnum availability) {
+                   Availability availability) {
         this.id = id;
         this.productName = productName;
         this.description = description;

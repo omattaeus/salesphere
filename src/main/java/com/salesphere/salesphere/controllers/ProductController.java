@@ -12,6 +12,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RequestMapping(value = "/products")
 @RestController
@@ -55,6 +56,12 @@ public class ProductController {
     public ResponseEntity<ProductResponseDTO> createProduct(@RequestBody ProductRequestDTO productRequestDTO) {
         ProductResponseDTO productResponse = productService.createProduct(productRequestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(productResponse);
+    }
+
+    @PostMapping("/create")
+    public ResponseEntity<List<ProductResponseDTO>> createProducts(@RequestBody List<ProductRequestDTO> productRequestDTOs) {
+        List<ProductResponseDTO> productResponses = productService.createProducts(productRequestDTOs);
+        return ResponseEntity.status(HttpStatus.CREATED).body(productResponses);
     }
 
     @PutMapping("/{productId}")
