@@ -24,56 +24,75 @@ public class ProductUpdater {
     }
 
     public void applyUpdates(Product product, Map<String, Object> updates) {
+        if (product == null) {
+            throw new IllegalArgumentException("O produto não pode ser nulo.");
+        }
+
+        if (updates == null || updates.isEmpty()) {
+            throw new IllegalArgumentException("O mapa de atualizações não pode ser nulo ou vazio.");
+        }
+
         updates.forEach((key, value) -> {
             String fieldName = FIELD_NAME_MAPPING.getOrDefault(key, key);
             Field field = ReflectionUtils.findField(Product.class, fieldName);
-            if (field != null) {
+
+            if (field == null) {
+                throw new IllegalArgumentException("Campo desconhecido: " + key);
+            }
+
+            try {
                 field.setAccessible(true);
                 Class<?> fieldType = field.getType();
                 Object convertedValue = convertValue(value, fieldType);
                 ReflectionUtils.setField(field, product, convertedValue);
-            } else {
-                throw new IllegalArgumentException("Campo desconhecido: " + key);
+            } catch (Exception e) {
+                throw new RuntimeException("Erro ao atualizar o campo '" + fieldName + "' no produto.", e);
             }
         });
     }
 
     private Object convertValue(Object value, Class<?> targetType) {
-        // Check if a suitable converter is available
+        if (value == null) {
+            return null;
+        }
+
         for (FieldValueConverter converter : converters) {
             if (converter.supports(targetType)) {
                 return converter.convert(value, targetType);
             }
         }
 
-        // Handle specific conversion for Availability
         if (targetType.equals(Availability.class)) {
-            if (value instanceof Boolean) {
-                // Convert Boolean to AvailabilityEnum
-                AvailabilityEnum availabilityEnum = (Boolean) value ? AvailabilityEnum.AVAILABLE : AvailabilityEnum.OUT_OF_STOCK;
-                return new Availability(availabilityEnum);
-            } else if (value instanceof String) {
-                // Convert String to AvailabilityEnum
-                try {
-                    AvailabilityEnum availabilityEnum = AvailabilityEnum.valueOf((String) value);
-                    return new Availability(availabilityEnum);
-                } catch (IllegalArgumentException e) {
-                    throw new IllegalArgumentException("Invalid value for Availability: " + value);
-                }
-            }
+            return convertToAvailability(value);
         }
 
-        // Handle other custom types or default conversion
         if (targetType.isEnum() && value instanceof String) {
-            // Convert String to Enum
-            try {
-                return Enum.valueOf((Class<Enum>) targetType, (String) value);
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Invalid value for enum type: " + value);
-            }
+            return convertToEnum(value, targetType);
         }
 
-        // Handle default conversion (e.g., if the type is a number or String)
-        return value;
+        throw new IllegalArgumentException("Conversão não suportada para o tipo: " + targetType.getName() + " com valor: " + value);
+    }
+
+    private Availability convertToAvailability(Object value) {
+        if (value instanceof Boolean) {
+            AvailabilityEnum availabilityEnum = (Boolean) value ? AvailabilityEnum.AVAILABLE : AvailabilityEnum.OUT_OF_STOCK;
+            return new Availability(availabilityEnum);
+        } else if (value instanceof String) {
+            try {
+                AvailabilityEnum availabilityEnum = AvailabilityEnum.valueOf((String) value);
+                return new Availability(availabilityEnum);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Valor inválido para Availability: " + value, e);
+            }
+        }
+        throw new IllegalArgumentException("Valor inválido para Availability: " + value);
+    }
+
+    private Object convertToEnum(Object value, Class<?> targetType) {
+        try {
+            return Enum.valueOf((Class<Enum>) targetType, (String) value);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Valor inválido para o tipo enum " + targetType.getSimpleName() + ": " + value, e);
+        }
     }
 }

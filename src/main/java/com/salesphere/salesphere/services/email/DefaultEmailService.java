@@ -4,20 +4,20 @@ import com.salesphere.salesphere.exceptions.EmailSendingException;
 import com.salesphere.salesphere.exceptions.EmailSendingTestException;
 import com.salesphere.salesphere.models.Product;
 import com.salesphere.salesphere.services.report.ReportService;
+import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.List;
 
 @Service
 public class DefaultEmailService implements EmailService {
 
-    private static final Logger logger = LoggerFactory.getLogger(DefaultEmailService.class);
     private final JavaMailSender mailSender;
     private final ReportService reportService;
 
@@ -36,32 +36,37 @@ public class DefaultEmailService implements EmailService {
 
             String emailContent = buildEmailContent(products);
             messageHelper.setText(emailContent, true);
-            ByteArrayInputStream pdfReportStream = reportService.generatePdfLowStockReport(products);
-            ByteArrayResource pdfReportResource = new ByteArrayResource(pdfReportStream.readAllBytes()) {
-                @Override
-                public String getFilename() {
-                    return "Relatório_Estoque_Baixo.pdf";
-                }
-            };
-            messageHelper.addAttachment(pdfReportResource.getFilename(), pdfReportResource);
 
-            ByteArrayInputStream excelReportStream = reportService.generateExcelLowStockReport(products);
-            ByteArrayResource excelReportResource = new ByteArrayResource(excelReportStream.readAllBytes()) {
-                @Override
-                public String getFilename() {
-                    return "Relatório_Estoque_Baixo.xlsx";
-                }
-            };
-            messageHelper.addAttachment(excelReportResource.getFilename(), excelReportResource);
+            addAttachmentsToMessageHelper(products, messageHelper);
 
             mailSender.send(mimeMessage);
         } catch (EmailSendingTestException e) {
-            logger.error("Failed to send email alert for low stock. Products: {}", products, e);
-            throw new EmailSendingException("Failed to send email alert for low stock.", e);
+            throw new EmailSendingException("Erro ao enviar o alerta de estoque baixo. Verifique os detalhes dos produtos.", e);
+        } catch (IOException e) {
+            throw new EmailSendingException("Erro ao processar os relatórios anexos do alerta de estoque baixo.", e);
         } catch (Exception e) {
-            logger.error("An unexpected error occurred while sending email alert for low stock.", e);
-            throw new EmailSendingException("An unexpected error occurred while sending email alert for low stock.", e);
+            throw new EmailSendingException("Ocorreu um erro inesperado ao enviar o alerta de estoque baixo.", e);
         }
+    }
+
+    private void addAttachmentsToMessageHelper(List<Product> products, MimeMessageHelper messageHelper) throws IOException, MessagingException {
+        ByteArrayInputStream pdfReportStream = reportService.generatePdfLowStockReport(products);
+        ByteArrayResource pdfReportResource = new ByteArrayResource(pdfReportStream.readAllBytes()) {
+            @Override
+            public String getFilename() {
+                return "Relatório_Estoque_Baixo.pdf";
+            }
+        };
+        messageHelper.addAttachment(pdfReportResource.getFilename(), pdfReportResource);
+
+        ByteArrayInputStream excelReportStream = reportService.generateExcelLowStockReport(products);
+        ByteArrayResource excelReportResource = new ByteArrayResource(excelReportStream.readAllBytes()) {
+            @Override
+            public String getFilename() {
+                return "Relatório_Estoque_Baixo.xlsx";
+            }
+        };
+        messageHelper.addAttachment(excelReportResource.getFilename(), excelReportResource);
     }
 
     public String buildEmailContent(List<Product> products) {
