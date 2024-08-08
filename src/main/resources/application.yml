@@ -20,3 +20,9 @@ spring:
           auth: true
           starttls:
             enable: true
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  packages-to-scan: com.salesphere.salesphere.controllers
