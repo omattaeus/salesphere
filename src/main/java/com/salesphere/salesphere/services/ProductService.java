@@ -53,6 +53,12 @@ public class ProductService implements StockCheckStrategy {
         this.stockWebSocketHandler = stockWebSocketHandler;
     }
 
+    public ProductResponseDTO getProductById(Long productId) {
+        Product product = repository.findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto não encontrado"));
+        return productMapper.toProductResponse(product);
+    }
+
     public List<ProductResponseDTO> getAllProducts() {
         List<Product> allProducts = repository.findAll();
         return allProducts.stream()
@@ -104,7 +110,6 @@ public class ProductService implements StockCheckStrategy {
         Product updatedProduct = repository.save(existingProduct);
         return productMapper.toProductResponse(updatedProduct);
     }
-
 
     public ProductResponseDTO partialUpdateProduct(Long productId, Map<String, Object> updates) {
         Product existingProduct = repository.findById(productId)

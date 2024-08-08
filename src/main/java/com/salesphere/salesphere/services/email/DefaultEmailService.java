@@ -1,10 +1,12 @@
 package com.salesphere.salesphere.services.email;
 
+import com.salesphere.salesphere.exceptions.EmailSendingException;
+import com.salesphere.salesphere.exceptions.EmailSendingTestException;
 import com.salesphere.salesphere.models.Product;
 import com.salesphere.salesphere.services.report.ReportService;
-import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import org.springframework.core.io.ByteArrayResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,7 @@ import java.util.List;
 @Service
 public class DefaultEmailService implements EmailService {
 
+    private static final Logger logger = LoggerFactory.getLogger(DefaultEmailService.class);
     private final JavaMailSender mailSender;
     private final ReportService reportService;
 
@@ -32,8 +35,7 @@ public class DefaultEmailService implements EmailService {
             messageHelper.setSubject("Alerta de Estoque Baixo");
 
             String emailContent = buildEmailContent(products);
-            messageHelper.setText(emailContent, true); // 'true' indica conteúdo HTML
-
+            messageHelper.setText(emailContent, true);
             ByteArrayInputStream pdfReportStream = reportService.generatePdfLowStockReport(products);
             ByteArrayResource pdfReportResource = new ByteArrayResource(pdfReportStream.readAllBytes()) {
                 @Override
@@ -53,12 +55,16 @@ public class DefaultEmailService implements EmailService {
             messageHelper.addAttachment(excelReportResource.getFilename(), excelReportResource);
 
             mailSender.send(mimeMessage);
-        } catch (MessagingException e) {
-            e.printStackTrace();
+        } catch (EmailSendingTestException e) {
+            logger.error("Failed to send email alert for low stock. Products: {}", products, e);
+            throw new EmailSendingException("Failed to send email alert for low stock.", e);
+        } catch (Exception e) {
+            logger.error("An unexpected error occurred while sending email alert for low stock.", e);
+            throw new EmailSendingException("An unexpected error occurred while sending email alert for low stock.", e);
         }
     }
 
-    private String buildEmailContent(List<Product> products) {
+    public String buildEmailContent(List<Product> products) {
         StringBuilder sb = new StringBuilder();
 
         sb.append("<html>")
@@ -84,6 +90,7 @@ public class DefaultEmailService implements EmailService {
                 .append("<th>Descrição</th>")
                 .append("<th>Marca</th>")
                 .append("<th>Categoria</th>")
+                .append("<th>SKU</th>")
                 .append("<th>Preço de Compra</th>")
                 .append("<th>Preço de Venda</th>")
                 .append("<th>Quantidade em Estoque</th>")
@@ -96,8 +103,9 @@ public class DefaultEmailService implements EmailService {
                     .append("<td>").append(product.getDescription() != null ? product.getDescription() : "N/A").append("</td>")
                     .append("<td>").append(product.getBrand() != null ? product.getBrand() : "N/A").append("</td>")
                     .append("<td>").append(product.getCategory() != null ? product.getCategory().toString() : "N/A").append("</td>")
-                    .append("<td>").append(String.format("%.2f", product.getPurchasePrice())).append("</td>")
-                    .append("<td>").append(String.format("%.2f", product.getSalePrice())).append("</td>")
+                    .append("<td>").append(product.getCodeSku() != null ? product.getCodeSku() : "N/A").append("</td>")
+                    .append("<td>").append(String.format("%.2f", product.getPurchasePrice()).replace(".", ",")).append("</td>")
+                    .append("<td>").append(String.format("%.2f", product.getSalePrice()).replace(".", ",")).append("</td>")
                     .append("<td>").append(product.getStockQuantity()).append("</td>")
                     .append("<td>").append(product.getMinimumQuantity()).append("</td>")
                     .append("</tr>");

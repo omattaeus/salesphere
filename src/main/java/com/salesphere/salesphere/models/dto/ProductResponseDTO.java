@@ -4,14 +4,14 @@ import com.salesphere.salesphere.models.enums.AvailabilityEnum;
 import com.salesphere.salesphere.models.enums.CategoryEnum;
 
 public record ProductResponseDTO(Long id,
-                                 String productName,
-                                 String description,
-                                 String brand,
-                                 CategoryEnum category,
-                                 Double purchasePrice,
-                                 Double salePrice,
-                                 Long stockQuantity,
-                                 Long minimumQuantity,
-                                 String codeSKU,
-                                 AvailabilityEnum availability) {
-}
+                                String productName,
+                                String description,
+                                String brand,
+                                CategoryEnum category,
+                                Double purchasePrice,
+                                Double retailPrice,
+                                Long stockQuantity,
+                                Long minimumStock,
+                                String sku,
+                                AvailabilityEnum availability
+                        ) {}

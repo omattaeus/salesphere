@@ -1,19 +1,21 @@
 package com.salesphere.salesphere.services.converter;
 
+import com.salesphere.salesphere.models.Availability;
 import com.salesphere.salesphere.models.Product;
+import com.salesphere.salesphere.models.enums.AvailabilityEnum;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class ProductUpdater {
 
     private final List<FieldValueConverter> converters;
     private static final Map<String, String> FIELD_NAME_MAPPING = Map.of(
-            "code_sku", "codeSKU",
+            "code_sku", "codeSku",
             "availability", "availability"
     );
 
@@ -37,11 +39,41 @@ public class ProductUpdater {
     }
 
     private Object convertValue(Object value, Class<?> targetType) {
+        // Check if a suitable converter is available
         for (FieldValueConverter converter : converters) {
             if (converter.supports(targetType)) {
                 return converter.convert(value, targetType);
             }
         }
+
+        // Handle specific conversion for Availability
+        if (targetType.equals(Availability.class)) {
+            if (value instanceof Boolean) {
+                // Convert Boolean to AvailabilityEnum
+                AvailabilityEnum availabilityEnum = (Boolean) value ? AvailabilityEnum.AVAILABLE : AvailabilityEnum.OUT_OF_STOCK;
+                return new Availability(availabilityEnum);
+            } else if (value instanceof String) {
+                // Convert String to AvailabilityEnum
+                try {
+                    AvailabilityEnum availabilityEnum = AvailabilityEnum.valueOf((String) value);
+                    return new Availability(availabilityEnum);
+                } catch (IllegalArgumentException e) {
+                    throw new IllegalArgumentException("Invalid value for Availability: " + value);
+                }
+            }
+        }
+
+        // Handle other custom types or default conversion
+        if (targetType.isEnum() && value instanceof String) {
+            // Convert String to Enum
+            try {
+                return Enum.valueOf((Class<Enum>) targetType, (String) value);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid value for enum type: " + value);
+            }
+        }
+
+        // Handle default conversion (e.g., if the type is a number or String)
         return value;
     }
 }

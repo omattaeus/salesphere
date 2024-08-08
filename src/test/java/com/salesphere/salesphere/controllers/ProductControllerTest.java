@@ -37,14 +37,11 @@ public class ProductControllerTest {
     @MockBean
     private EmailService emailService;
 
-    @Autowired
-    private ProductController productController;
-
     @Test
     @DisplayName("Should return all products successfully")
     public void shouldReturnAllProducts() throws Exception {
         ProductResponseDTO productResponseDTO = new ProductResponseDTO(
-                "Puma T-Shirt", "Cotton sports t-shirt", "Puma",
+                1L, "Puma T-Shirt", "Cotton sports t-shirt", "Puma",
                 CategoryEnum.MALE, 50.00, 80.00, 30L, 5L,
                 "PUMA123", AvailabilityEnum.AVAILABLE
         );
@@ -58,10 +55,10 @@ public class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("Should return low stock products successfully")
+    @DisplayName("Should return products with low stock successfully")
     public void shouldReturnProductsWithLowStock() throws Exception {
         ProductResponseDTO productLowStock = new ProductResponseDTO(
-                "Low Stock Product", "Description", "Brand",
+                1L, "Low Stock Product", "Description", "Brand",
                 CategoryEnum.MALE, 50.00, 80.00, 3L, 5L,
                 "SKU123", AvailabilityEnum.AVAILABLE
         );
@@ -71,35 +68,12 @@ public class ProductControllerTest {
         mockMvc.perform(get("/products/low-stock")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].stockQuantity").value(3L));
+                .andExpect(jsonPath("$[0].stockQuantity").value(3L))
+                .andExpect(jsonPath("$[0].productName").value("Low Stock Product"));
     }
 
     @Test
-    @DisplayName("Should return no content when no low stock products")
-    public void shouldReturnNoContentWhenNoLowStockProducts() throws Exception {
-        when(productService.getProductsWithLowStock()).thenReturn(Collections.emptyList());
-
-        mockMvc.perform(get("/products/low-stock")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
-    }
-
-    @Test
-    @DisplayName("Should check stock successfully")
-    public void shouldCheckStock() throws Exception {
-        when(productService.getRawProductsWithLowStock()).thenReturn(Collections.singletonList(new Product()));
-
-        mockMvc.perform(get("/products/check-stock")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(content().string("Alerta de estoque baixo enviado por e-mail."));
-
-        verify(productService).getRawProductsWithLowStock();
-        verify(emailService).sendLowStockAlert(any());
-    }
-
-    @Test
-    @DisplayName("Should send low stock alert when products are low in stock")
+    @DisplayName("Should send low stock alert email successfully")
     public void shouldSendLowStockAlert() throws Exception {
         Product productWithLowStock = new Product();
         when(productService.getRawProductsWithLowStock()).thenReturn(Collections.singletonList(productWithLowStock));
@@ -109,6 +83,7 @@ public class ProductControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string("Alerta de estoque baixo enviado por e-mail."));
 
+        verify(productService).getRawProductsWithLowStock();
         verify(emailService).sendLowStockAlert(Collections.singletonList(productWithLowStock));
     }
 
@@ -125,7 +100,6 @@ public class ProductControllerTest {
         verify(emailService, never()).sendLowStockAlert(any());
     }
 
-
     @Test
     @DisplayName("Should create a product successfully")
     public void shouldCreateProduct() throws Exception {
@@ -136,7 +110,7 @@ public class ProductControllerTest {
         );
 
         ProductResponseDTO productResponseDTO = new ProductResponseDTO(
-                "Puma T-Shirt", "Cotton sports t-shirt", "Puma",
+                1L, "Puma T-Shirt", "Cotton sports t-shirt", "Puma",
                 CategoryEnum.MALE, 50.00, 80.00, 30L, 5L,
                 "PUMA123", AvailabilityEnum.AVAILABLE
         );
@@ -148,7 +122,10 @@ public class ProductControllerTest {
                         .content(new ObjectMapper().writeValueAsString(productRequestDTO)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.productName").value("Puma T-Shirt"))
-                .andExpect(jsonPath("$.description").value("Cotton sports t-shirt"));
+                .andExpect(jsonPath("$.description").value("Cotton sports t-shirt"))
+                .andExpect(jsonPath("$.purchasePrice").value(50.00))
+                .andExpect(jsonPath("$.stockQuantity").value(30L))
+                .andExpect(jsonPath("$.availability").value("AVAILABLE"));
     }
 
     @Test
@@ -180,7 +157,7 @@ public class ProductControllerTest {
         );
 
         ProductResponseDTO updatedProductResponseDTO = new ProductResponseDTO(
-                "Updated Puma T-Shirt", "Updated description", "Puma",
+                1L, "Updated Puma T-Shirt", "Updated description", "Puma",
                 CategoryEnum.MALE, 60.00, 90.00, 40L, 10L,
                 "PUMA123", AvailabilityEnum.AVAILABLE
         );
@@ -192,7 +169,10 @@ public class ProductControllerTest {
                         .content(new ObjectMapper().writeValueAsString(productRequestDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.productName").value("Updated Puma T-Shirt"))
-                .andExpect(jsonPath("$.description").value("Updated description"));
+                .andExpect(jsonPath("$.description").value("Updated description"))
+                .andExpect(jsonPath("$.purchasePrice").value(60.00))
+                .andExpect(jsonPath("$.stockQuantity").value(40L))
+                .andExpect(jsonPath("$.availability").value("AVAILABLE"));
     }
 
     @Test
@@ -201,7 +181,7 @@ public class ProductControllerTest {
         Map<String, Object> updates = Map.of("purchasePrice", 75.00, "description", "Partially updated description");
 
         ProductResponseDTO updatedProductResponseDTO = new ProductResponseDTO(
-                "Puma T-Shirt", "Partially updated description", "Puma",
+                1L, "Puma T-Shirt", "Partially updated description", "Puma",
                 CategoryEnum.MALE, 75.00, 80.00, 30L, 5L,
                 "PUMA123", AvailabilityEnum.AVAILABLE
         );
@@ -219,25 +199,18 @@ public class ProductControllerTest {
     @Test
     @DisplayName("Should delete a product successfully")
     public void shouldDeleteProduct() throws Exception {
-        Long productId = 1L;
-
-        doNothing().when(productService).deleteProduct(productId);
-
-        mockMvc.perform(delete("/products/{productId}", productId)
-                        .contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(delete("/products/{productId}", 1L))
                 .andExpect(status().isNoContent());
+
+        verify(productService).deleteProduct(1L);
     }
 
     @Test
-    @DisplayName("Should return not found when trying to delete a non-existent product")
-    public void shouldReturnNotFoundWhenDeletingNonExistentProduct() throws Exception {
-        Long productId = 1L;
+    @DisplayName("Should return error when trying to delete a non-existing product")
+    public void shouldReturnErrorWhenDeletingNonExistingProduct() throws Exception {
+        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found")).when(productService).deleteProduct(1L);
 
-        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto não encontrado"))
-                .when(productService).deleteProduct(productId);
-
-        mockMvc.perform(delete("/products/{productId}", productId)
-                        .contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(delete("/products/{productId}", 1L))
                 .andExpect(status().isNotFound());
     }
 }

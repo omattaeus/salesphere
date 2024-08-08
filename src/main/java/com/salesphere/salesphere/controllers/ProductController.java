@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -24,6 +25,13 @@ public class ProductController {
     public ProductController(ProductService productService, EmailService emailService) {
         this.productService = productService;
         this.emailService = emailService;
+    }
+
+    @GetMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<ProductResponseDTO> getProductById(@PathVariable("id") Long productId) {
+        ProductResponseDTO productResponse = productService.getProductById(productId);
+        return ResponseEntity.ok(productResponse);
     }
 
     @GetMapping
@@ -77,12 +85,13 @@ public class ProductController {
     }
 
     @DeleteMapping("/{productId}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable("productId") Long productId) {
+    public ResponseEntity<Map<String, String>> deleteProduct(@PathVariable("productId") Long productId) {
         try {
             productService.deleteProduct(productId);
             return ResponseEntity.noContent().build();
         } catch (ResponseStatusException ex) {
-            return ResponseEntity.status(ex.getStatusCode()).build();
+            return ResponseEntity.status(ex.getStatusCode())
+                    .body(Collections.singletonMap("message", ex.getReason()));
         }
     }
 }

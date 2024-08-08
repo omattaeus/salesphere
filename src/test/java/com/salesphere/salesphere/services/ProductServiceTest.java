@@ -1,7 +1,7 @@
-/*
 package com.salesphere.salesphere.services;
 
 import com.salesphere.salesphere.mapper.ProductMapper;
+import com.salesphere.salesphere.models.Availability;
 import com.salesphere.salesphere.models.Category;
 import com.salesphere.salesphere.models.Product;
 import com.salesphere.salesphere.models.dto.ProductRequestDTO;
@@ -9,7 +9,9 @@ import com.salesphere.salesphere.models.dto.ProductResponseDTO;
 import com.salesphere.salesphere.models.enums.AvailabilityEnum;
 import com.salesphere.salesphere.models.enums.CategoryEnum;
 import com.salesphere.salesphere.repositories.ProductRepository;
+import com.salesphere.salesphere.repositories.AvailabilityRepository;
 import com.salesphere.salesphere.services.email.EmailService;
+import com.salesphere.salesphere.services.websocket.StockWebSocketHandler;
 import jakarta.validation.ValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,10 +34,16 @@ public class ProductServiceTest {
     private ProductRepository repository;
 
     @Mock
+    private AvailabilityRepository availabilityRepository;
+
+    @Mock
     private ProductMapper productMapper;
 
     @Mock
     private EmailService emailService;
+
+    @Mock
+    private StockWebSocketHandler stockWebSocketHandler;
 
     @InjectMocks
     private ProductService productService;
@@ -46,42 +54,32 @@ public class ProductServiceTest {
     }
 
     @Test
-    @DisplayName("Should return all products when there are products registered")
+    @DisplayName("Given there are products registered, when retrieving all products, then it should return all products")
     public void shouldReturnAllProducts() {
-        Category shoesCategory = new Category();
-        shoesCategory.setCategoryEnum(CategoryEnum.SHOES);
-        shoesCategory.setId(1L);
-
+        // Given
         Product product = new Product();
         product.setProductName("Tênis Nike Air");
-        product.setDescription("Tênis esportivo");
-        product.setBrand("Nike");
-        product.setCategory(shoesCategory);
-        product.setPurchasePrice(250.00);
-        product.setSalePrice(400.00);
-        product.setStockQuantity(10L);
-        product.setMinimumQuantity(2L);
-        product.setCodeSku("NIKE123");
-        product.setAvailability(AvailabilityEnum.AVAILABLE);
+        product.setAvailability(new Availability());
 
         ProductResponseDTO productResponseDTO = new ProductResponseDTO(
-                "Tênis Nike Air", "Tênis esportivo", "Nike",
-                CategoryEnum.SHOES, 250.00, 400.00, 10L, 2L,
-                "NIKE123", AvailabilityEnum.AVAILABLE
+                null, "Tênis Nike Air", "", "", CategoryEnum.SHOES, 0.0, 0.0, 0L, 0L, "", AvailabilityEnum.AVAILABLE
         );
 
         when(repository.findAll()).thenReturn(Collections.singletonList(product));
         when(productMapper.toProductResponse(product)).thenReturn(productResponseDTO);
 
+        // When
         List<ProductResponseDTO> result = productService.getAllProducts();
 
+        // Then
         assertEquals(1, result.size());
         assertEquals(productResponseDTO, result.get(0));
     }
 
     @Test
-    @DisplayName("Should create a new product when the data is valid")
+    @DisplayName("Given valid product data, when creating a product, then it should create and return the product")
     public void shouldCreateProduct() {
+        // Given
         ProductRequestDTO productRequestDTO = new ProductRequestDTO(
                 "Camiseta Puma", "Camiseta esportiva de algodão", "Puma",
                 CategoryEnum.MALE, 50.00, 80.00, 30L, 5L,
@@ -94,70 +92,127 @@ public class ProductServiceTest {
 
         Product product = new Product();
         product.setProductName("Camiseta Puma");
-        product.setDescription("Camiseta esportiva de algodão");
-        product.setBrand("Puma");
         product.setCategory(maleCategory);
-        product.setPurchasePrice(50.00);
-        product.setSalePrice(80.00);
-        product.setStockQuantity(30L);
-        product.setMinimumQuantity(5L);
-        product.setCodeSku("PUMA123");
-        product.setAvailability(AvailabilityEnum.AVAILABLE);
+        product.setAvailability(new Availability());
 
         ProductResponseDTO productResponseDTO = new ProductResponseDTO(
-                "Camiseta Puma", "Camiseta esportiva de algodão", "Puma",
-                CategoryEnum.MALE, 50.00, 80.00, 30L, 5L,
-                "PUMA123", AvailabilityEnum.AVAILABLE
+                null, "Camiseta Puma", "Camiseta esportiva de algodão", "Puma", CategoryEnum.MALE, 50.00, 80.00, 30L, 5L, "PUMA123", AvailabilityEnum.AVAILABLE
         );
 
         when(productMapper.toProduct(productRequestDTO)).thenReturn(product);
+        when(availabilityRepository.findByAvailability(productRequestDTO.availability()))
+                .thenReturn(Optional.of(new Availability()));
         when(repository.save(product)).thenReturn(product);
         when(productMapper.toProductResponse(product)).thenReturn(productResponseDTO);
 
+        // When
         ProductResponseDTO result = productService.createProduct(productRequestDTO);
 
+        // Then
         assertEquals(productResponseDTO, result);
     }
 
     @Test
-    @DisplayName("Should throw ValidationException when creating product with empty name or null category")
+    @DisplayName("Given valid and invalid product data, when creating multiple products, then it should create valid products and throw an exception for invalid data")
+    public void shouldThrowValidationExceptionWhenOneProductHasInvalidData() {
+        // Given
+        ProductRequestDTO validProductRequestDTO = new ProductRequestDTO(
+                "Camiseta Nike", "Camiseta esportiva", "Nike",
+                CategoryEnum.MALE, 30.00, 50.00, 20L, 10L,
+                "NIKE123", AvailabilityEnum.AVAILABLE
+        );
+
+        ProductRequestDTO invalidProductRequestDTO = new ProductRequestDTO(
+                "", null, "Adidas",
+                CategoryEnum.FEMALE, 120.00, 150.00, 15L, 5L,
+                "ADIDAS456", AvailabilityEnum.OUT_OF_STOCK
+        );
+
+        when(productMapper.toProduct(validProductRequestDTO)).thenReturn(new Product());
+        when(availabilityRepository.findByAvailability(validProductRequestDTO.availability())).thenReturn(Optional.of(new Availability()));
+        when(productMapper.toProduct(invalidProductRequestDTO)).thenThrow(new ValidationException("Nome do produto é obrigatório"));
+
+        List<ProductRequestDTO> requestDTOs = List.of(validProductRequestDTO, invalidProductRequestDTO);
+
+        // When / Then
+        assertThrows(ValidationException.class, () -> {
+            productService.createProducts(requestDTOs);
+        });
+    }
+
+    @Test
+    @DisplayName("Given a product with invalid availability, when creating multiple products, then it should throw ValidationException")
+    public void shouldThrowValidationExceptionWhenAvailabilityNotFound() {
+        // Given
+        ProductRequestDTO validProductRequestDTO = new ProductRequestDTO(
+                "Camiseta Nike", "Camiseta esportiva", "Nike",
+                CategoryEnum.MALE, 30.00, 50.00, 20L, 10L,
+                "NIKE123", AvailabilityEnum.AVAILABLE
+        );
+
+        ProductRequestDTO anotherProductRequestDTO = new ProductRequestDTO(
+                "Tênis Adidas", "Tênis esportivo", "Adidas",
+                CategoryEnum.FEMALE, 120.00, 150.00, 15L, 5L,
+                "ADIDAS456", AvailabilityEnum.OUT_OF_STOCK
+        );
+
+        when(productMapper.toProduct(validProductRequestDTO)).thenReturn(new Product());
+        when(availabilityRepository.findByAvailability(validProductRequestDTO.availability())).thenReturn(Optional.of(new Availability()));
+        when(productMapper.toProduct(anotherProductRequestDTO)).thenReturn(new Product());
+        when(availabilityRepository.findByAvailability(anotherProductRequestDTO.availability())).thenReturn(Optional.empty());
+
+        List<ProductRequestDTO> requestDTOs = List.of(validProductRequestDTO, anotherProductRequestDTO);
+
+        // When / Then
+        assertThrows(ValidationException.class, () -> {
+            productService.createProducts(requestDTOs);
+        });
+    }
+
+    @Test
+    @DisplayName("Given invalid product data, when creating a product, then it should throw ValidationException")
     public void shouldThrowValidationExceptionWhenCreatingProductWithInvalidData() {
+        // Given
         ProductRequestDTO invalidProductRequestDTO = new ProductRequestDTO(
                 "", null, "Puma",
                 CategoryEnum.MALE, 50.00, 80.00, 30L, 5L,
                 "PUMA123", AvailabilityEnum.AVAILABLE
         );
 
+        // When / Then
         assertThrows(ValidationException.class, () -> {
             productService.createProduct(invalidProductRequestDTO);
         });
     }
 
     @Test
-    @DisplayName("Should return products with low stock when there are products below the minimum stock")
+    @DisplayName("Given products with low stock, when retrieving products with low stock, then it should return products with low stock")
     public void shouldReturnProductsWithLowStock() {
+        // Given
         Product productLowStock = new Product();
         productLowStock.setProductName("Tênis Nike Air Max");
         productLowStock.setStockQuantity(3L);
         productLowStock.setMinimumQuantity(5L);
 
         ProductResponseDTO productResponseDTO = new ProductResponseDTO(
-                "Tênis Nike Air Max", "", "", CategoryEnum.SHOES,
-                0.0, 0.0, 3L, 5L, "", AvailabilityEnum.AVAILABLE
+                null, "Tênis Nike Air Max", "", "", CategoryEnum.SHOES, 0.0, 0.0, 3L, 5L, "", AvailabilityEnum.AVAILABLE
         );
 
         when(repository.findProductsWithLowStock()).thenReturn(Collections.singletonList(productLowStock));
         when(productMapper.toProductResponse(productLowStock)).thenReturn(productResponseDTO);
 
+        // When
         List<ProductResponseDTO> result = productService.getProductsWithLowStock();
 
+        // Then
         assertEquals(1, result.size());
         assertEquals(productResponseDTO, result.get(0));
     }
 
     @Test
-    @DisplayName("Should send low stock alert for products with quantities below the minimum")
+    @DisplayName("Given products with low stock, when checking stock, then it should send a low stock alert")
     public void shouldSendLowStockAlertForLowStockProducts() {
+        // Given
         Product productLowStock = new Product();
         productLowStock.setProductName("Produto com Baixo Estoque");
         productLowStock.setStockQuantity(3L);
@@ -165,120 +220,109 @@ public class ProductServiceTest {
 
         when(repository.findProductsWithLowStock()).thenReturn(Collections.singletonList(productLowStock));
 
+        // When
         productService.checkStock();
 
+        // Then
         verify(emailService, times(1)).sendLowStockAlert(anyList());
     }
 
     @Test
-    @DisplayName("Should not send low stock alert when there are no products with low stock")
-    public void shouldNotSendLowStockAlertWhenNoLowStockProducts() {
-        when(repository.findProductsWithLowStock()).thenReturn(Collections.emptyList());
-
-        productService.checkStock();
-
-        verify(emailService, never()).sendLowStockAlert(anyList());
-    }
-
-    @Test
-    @DisplayName("Should update an existing product with valid data")
+    @DisplayName("Given product data, when updating a product, then it should update and return the product")
     public void shouldUpdateProduct() {
+        // Given
         Long productId = 1L;
-
-        ProductRequestDTO productRequestDTO = new ProductRequestDTO(
-                "Camiseta Puma", "Camiseta esportiva de algodão", "Puma",
-                CategoryEnum.MALE, 55.00, 85.00, 35L, 5L,
-                "PUMA123", AvailabilityEnum.AVAILABLE
+        ProductRequestDTO updateRequestDTO = new ProductRequestDTO(
+                "Camiseta Atualizada", "Descrição atualizada", "Marca Atualizada",
+                CategoryEnum.FEMALE, 60.00, 90.00, 25L, 10L,
+                "CAMISETA123", AvailabilityEnum.OUT_OF_STOCK
         );
 
-        Category maleCategory = new Category();
-        maleCategory.setCategoryEnum(CategoryEnum.MALE);
-        maleCategory.setId(1L);
-
         Product existingProduct = new Product();
-        existingProduct.setId(productId);
-        existingProduct.setProductName("Camiseta Puma");
-        existingProduct.setDescription("Camiseta esportiva de algodão");
-        existingProduct.setBrand("Puma");
-        existingProduct.setCategory(maleCategory);
+        existingProduct.setProductName("Camiseta Antiga");
+        existingProduct.setCodeSku("OLDSKU");
         existingProduct.setPurchasePrice(50.00);
-        existingProduct.setSalePrice(80.00);
-        existingProduct.setStockQuantity(30L);
+        existingProduct.setSalePrice(75.00);
+        existingProduct.setStockQuantity(20L);
         existingProduct.setMinimumQuantity(5L);
-        existingProduct.setCodeSku("PUMA123");
-        existingProduct.setAvailability(AvailabilityEnum.AVAILABLE);
+        existingProduct.setAvailability(new Availability(AvailabilityEnum.AVAILABLE)); // Ajuste para AvailabilityEnum.AVAILABLE
+
+        Product updatedProduct = new Product();
+        updatedProduct.setProductName("Camiseta Atualizada");
+        updatedProduct.setCodeSku("CAMISETA123");
+        updatedProduct.setPurchasePrice(60.00);
+        updatedProduct.setSalePrice(90.00);
+        updatedProduct.setStockQuantity(25L);
+        updatedProduct.setMinimumQuantity(10L);
+        updatedProduct.setAvailability(new Availability(AvailabilityEnum.OUT_OF_STOCK)); // Ajuste para AvailabilityEnum.OUT_OF_STOCK
 
         ProductResponseDTO updatedProductResponseDTO = new ProductResponseDTO(
-                "Camiseta Puma", "Camiseta esportiva de algodão", "Puma",
-                CategoryEnum.MALE, 55.00, 85.00, 35L, 5L,
-                "PUMA123", AvailabilityEnum.AVAILABLE
+                productId, "Camiseta Atualizada", "Descrição atualizada", "Marca Atualizada", CategoryEnum.FEMALE, 60.00, 90.00, 25L, 10L, "CAMISETA123", AvailabilityEnum.OUT_OF_STOCK
         );
 
         when(repository.findById(productId)).thenReturn(Optional.of(existingProduct));
-        doAnswer(invocation -> {
-            ProductRequestDTO dto = invocation.getArgument(0);
-            Product product = invocation.getArgument(1);
+        when(productMapper.toProduct(updateRequestDTO)).thenReturn(updatedProduct);
+        when(availabilityRepository.findByAvailability(AvailabilityEnum.OUT_OF_STOCK))
+                .thenReturn(Optional.of(new Availability(AvailabilityEnum.OUT_OF_STOCK)));
+        when(repository.save(existingProduct)).thenReturn(updatedProduct); // Corrigido: Salvar existingProduct
+        when(productMapper.toProductResponse(updatedProduct)).thenReturn(updatedProductResponseDTO);
 
-            product.setProductName(dto.productName());
-            product.setDescription(dto.description());
-            product.setBrand(dto.brand());
-            product.setPurchasePrice(dto.purchasePrice());
-            product.setSalePrice(dto.salePrice());
-            product.setStockQuantity(dto.stockQuantity());
-            product.setMinimumQuantity(dto.minimumQuantity());
-            product.setCodeSku(dto.codeSKU());
-            product.setAvailability(dto.availability());
+        // When
+        ProductResponseDTO result = productService.updateProduct(productId, updateRequestDTO);
 
-            return null;
-        }).when(productMapper).updateProductFromDto(eq(productRequestDTO), eq(existingProduct));
-        when(repository.save(existingProduct)).thenReturn(existingProduct);
-        when(productMapper.toProductResponse(existingProduct)).thenReturn(updatedProductResponseDTO);
-
-        ProductResponseDTO result = productService.updateProduct(productId, productRequestDTO);
-
+        // Then
+        assertNotNull(result, "O resultado não deve ser nulo");
         assertEquals(updatedProductResponseDTO, result);
     }
 
     @Test
-    @DisplayName("Should throw ResponseStatusException when updating a non-existing product")
-    public void shouldThrowResponseStatusExceptionWhenUpdatingNonExistingProduct() {
-        Long productId = 1L;
-
-        ProductRequestDTO productRequestDTO = new ProductRequestDTO(
-                "Camiseta Puma", "Camiseta esportiva de algodão", "Puma",
-                CategoryEnum.MALE, 55.00, 85.00, 35L, 5L,
-                "PUMA123", AvailabilityEnum.AVAILABLE
+    @DisplayName("Given a non-existent product ID, when updating a product, then it should throw ResourceNotFoundException")
+    public void shouldThrowResourceNotFoundExceptionWhenUpdatingNonExistentProduct() {
+        // Given
+        Long nonExistentProductId = 999L;
+        ProductRequestDTO updateRequestDTO = new ProductRequestDTO(
+                "Camiseta Atualizada", "Descrição atualizada", "Marca Atualizada",
+                CategoryEnum.FEMALE, 60.00, 90.00, 25L, 10L,
+                "CAMISETA123", AvailabilityEnum.OUT_OF_STOCK
         );
 
-        when(repository.findById(productId)).thenReturn(Optional.empty());
+        when(repository.findById(nonExistentProductId)).thenReturn(Optional.empty());
 
+        // When / Then
         assertThrows(ResponseStatusException.class, () -> {
-            productService.updateProduct(productId, productRequestDTO);
+            productService.updateProduct(nonExistentProductId, updateRequestDTO);
         });
     }
 
     @Test
-    @DisplayName("Should delete a product by id")
+    @DisplayName("Given a product ID, when deleting a product, then it should delete the product")
     public void shouldDeleteProduct() {
+        // Given
         Long productId = 1L;
+        Product existingProduct = new Product();
+        existingProduct.setProductName("Produto a ser excluído");
 
+        when(repository.findById(productId)).thenReturn(Optional.of(existingProduct));
         when(repository.existsById(productId)).thenReturn(true);
 
+        // When
         productService.deleteProduct(productId);
 
+        // Then
         verify(repository, times(1)).deleteById(productId);
     }
 
     @Test
-    @DisplayName("Should throw ResponseStatusException when deleting a non-existing product")
-    public void shouldThrowResponseStatusExceptionWhenDeletingNonExistingProduct() {
-        Long productId = 1L;
+    @DisplayName("Given a non-existent product ID, when deleting a product, then it should throw ResourceNotFoundException")
+    public void shouldThrowResourceNotFoundExceptionWhenDeletingNonExistentProduct() {
+        // Given
+        Long nonExistentProductId = 999L;
 
-        when(repository.existsById(productId)).thenReturn(false);
+        when(repository.findById(nonExistentProductId)).thenReturn(Optional.empty());
 
+        // When / Then
         assertThrows(ResponseStatusException.class, () -> {
-            productService.deleteProduct(productId);
+            productService.deleteProduct(nonExistentProductId);
         });
     }
 }
- */

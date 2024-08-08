@@ -2,6 +2,7 @@ package com.salesphere.salesphere.repositories;
 
 import com.salesphere.salesphere.models.Category;
 import com.salesphere.salesphere.models.Product;
+import com.salesphere.salesphere.models.Availability;
 import com.salesphere.salesphere.models.enums.CategoryEnum;
 import com.salesphere.salesphere.models.enums.AvailabilityEnum;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,31 +26,43 @@ public class ProductRepositoryTest {
     @Autowired
     private CategoryRepository categoryRepository;
 
+    @Autowired
+    private AvailabilityRepository availabilityRepository; // Adicionei isto para salvar a disponibilidade
+
     @BeforeEach
     public void setup() {
+        productRepository.deleteAll();
+        categoryRepository.deleteAll();
+        availabilityRepository.deleteAll();
+
         Category category = new Category();
         category.setCategoryEnum(CategoryEnum.MALE);
         categoryRepository.save(category);
 
+        Availability available = new Availability(AvailabilityEnum.AVAILABLE);
+        Availability outOfStock = new Availability(AvailabilityEnum.OUT_OF_STOCK);
+        availabilityRepository.save(available);
+        availabilityRepository.save(outOfStock);
+
         Product product1 = new Product(
                 null, "Product1", "Description1", "Brand1",
-                100.00, 150.00, 5L, 10L,  // Ordens e tipos corretos
-                "SKU001", category,  // Mova category para a posição correta
-                AvailabilityEnum.AVAILABLE
+                100.00, 150.00, 5L, 10L,
+                "SKU001", category,
+                available
         );
 
         Product product2 = new Product(
                 null, "Product2", "Description2", "Brand2",
                 200.00, 250.00, 15L, 20L,
                 "SKU002", category,
-                AvailabilityEnum.OUT_OF_STOCK
+                outOfStock
         );
 
         Product product3 = new Product(
                 null, "Product3", "Description3", "Brand3",
                 300.00, 350.00, 25L, 20L,
                 "SKU003", category,
-                AvailabilityEnum.AVAILABLE
+                available
         );
 
         productRepository.save(product1);
