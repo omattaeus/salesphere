@@ -1,5 +1,6 @@
 package com.salesphere.salesphere.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.salesphere.salesphere.models.enums.CategoryEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -27,23 +28,14 @@ public class Category {
     private CategoryEnum categoryEnum;
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonBackReference
     private List<Product> products = new ArrayList<>();
 
-    /**
-     * Adiciona um produto à categoria.
-     *
-     * @param product o produto a ser adicionado
-     */
     public void addProduct(Product product) {
         products.add(product);
         product.setCategory(this);
     }
 
-    /**
-     * Remove um produto da categoria.
-     *
-     * @param product o produto a ser removido
-     */
     public void removeProduct(Product product) {
         products.remove(product);
         product.setCategory(null);

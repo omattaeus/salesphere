@@ -31,6 +31,26 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ErrorResponseFactory.createErrorResponse("Erro Interno", "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde."));
     }
+
+    @ExceptionHandler(ExternalApiException.class)
+    public ResponseEntity<String> handleExternalApiException(ExternalApiException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleGenericException(Exception ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ocorreu um erro interno. Tente novamente mais tarde.");
+    }
+
+    @ExceptionHandler(InventoryMovementException.class)
+    public ResponseEntity<String> handleInventoryMovementException(InventoryMovementException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(ProductExpiryException.class)
+    public ResponseEntity<String> handleProductExpiryException(ProductExpiryException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
 }
 
 class ErrorResponseFactory {

@@ -1,17 +1,26 @@
 package com.salesphere.salesphere.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.salesphere.salesphere.models.enums.StatusEnum;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "tb_product")
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class Product {
 
     @Id
@@ -52,28 +61,31 @@ public class Product {
     @JsonProperty(value = "code_sku")
     private String codeSku;
 
+    @Column(name = "inventory_item_id")
+    private Long inventoryItemId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
+    @JsonBackReference
     private Category category;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "availability_id", nullable = false)
+    @JsonBackReference
     private Availability availability;
 
-    public Product(Long id, String productName, String description, String brand,
-                   Double purchasePrice, Double salePrice, Long stockQuantity,
-                   Long minimumQuantity, String codeSku, Category category,
-                   Availability availability) {
-        this.id = id;
-        this.productName = productName;
-        this.description = description;
-        this.brand = brand;
-        this.purchasePrice = purchasePrice;
-        this.salePrice = salePrice;
-        this.stockQuantity = stockQuantity;
-        this.minimumQuantity = minimumQuantity;
-        this.codeSku = codeSku;
-        this.category = category;
-        this.availability = availability;
-    }
+    @Column(name = "expiration_date")
+    private LocalDate expirationDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status_enum")
+    private StatusEnum status;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private Set<InventoryMovement> inventoryMovements = new HashSet<>();
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private Set<WarehouseProduct> warehouseProducts = new HashSet<>();
 }

@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface EmailService {
     void sendLowStockAlert(List<Product> products);
+    void sendStockReplenishmentAlert(String message);
 }

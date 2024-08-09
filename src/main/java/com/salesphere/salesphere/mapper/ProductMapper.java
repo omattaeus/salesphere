@@ -1,29 +1,43 @@
 package com.salesphere.salesphere.mapper;
 
-import com.salesphere.salesphere.models.Category;
-import com.salesphere.salesphere.models.Product;
-import com.salesphere.salesphere.models.Availability;
+import com.salesphere.salesphere.models.*;
 import com.salesphere.salesphere.models.dto.ProductRequestDTO;
 import com.salesphere.salesphere.models.dto.ProductResponseDTO;
 import com.salesphere.salesphere.models.enums.AvailabilityEnum;
 import com.salesphere.salesphere.models.enums.CategoryEnum;
+import com.salesphere.salesphere.models.enums.StatusEnum;
 import com.salesphere.salesphere.repositories.CategoryRepository;
 import com.salesphere.salesphere.repositories.AvailabilityRepository;
+import com.salesphere.salesphere.repositories.InventoryMovementRepository;
+import com.salesphere.salesphere.repositories.WarehouseProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class ProductMapper {
 
     private final CategoryRepository categoryRepository;
     private final AvailabilityRepository availabilityRepository;
+    private final InventoryMovementRepository inventoryMovementRepository;
+    private final WarehouseProductRepository warehouseProductRepository;
 
     @Autowired
-    public ProductMapper(CategoryRepository categoryRepository, AvailabilityRepository availabilityRepository) {
+    public ProductMapper(
+            CategoryRepository categoryRepository,
+            AvailabilityRepository availabilityRepository,
+            InventoryMovementRepository inventoryMovementRepository,
+            WarehouseProductRepository warehouseProductRepository
+    ) {
         this.categoryRepository = categoryRepository;
         this.availabilityRepository = availabilityRepository;
+        this.inventoryMovementRepository = inventoryMovementRepository;
+        this.warehouseProductRepository = warehouseProductRepository;
     }
 
     public Product toProduct(ProductRequestDTO productRequestDTO) {
@@ -31,8 +45,10 @@ public class ProductMapper {
 
         Category category = getCategory(productRequestDTO.category());
         Availability availability = getAvailability(productRequestDTO.availability());
+        Set<InventoryMovement> inventoryMovements = getInventoryMovements(productRequestDTO.inventoryMovementIds());
+        Set<WarehouseProduct> warehouseProducts = getWarehouseProducts(productRequestDTO.warehouseProductIds());
 
-        return new Product(
+        Product product = new Product(
                 null,
                 productRequestDTO.productName(),
                 productRequestDTO.description(),
@@ -41,10 +57,29 @@ public class ProductMapper {
                 productRequestDTO.salePrice(),
                 productRequestDTO.stockQuantity(),
                 productRequestDTO.minimumQuantity(),
-                productRequestDTO.codeSKU(),
+                productRequestDTO.codeSku(),
+                productRequestDTO.inventoryItemId(),
                 category,
-                availability
+                availability,
+                productRequestDTO.expirationDate(),
+                productRequestDTO.status(),
+                inventoryMovements,
+                warehouseProducts
         );
+
+        inventoryMovements.forEach(movement -> movement.setProduct(product));
+        warehouseProducts.forEach(warehouseProduct -> warehouseProduct.setProduct(product));
+
+        return product;
+    }
+
+
+    private Set<InventoryMovement> getInventoryMovements(List<Long> inventoryMovementIds) {
+        return inventoryMovementIds == null ? new HashSet<>() : inventoryMovementRepository.findAllById(inventoryMovementIds).stream().collect(Collectors.toSet());
+    }
+
+    private Set<WarehouseProduct> getWarehouseProducts(List<Long> warehouseProductIds) {
+        return warehouseProductIds == null ? new HashSet<>() : warehouseProductRepository.findAllById(warehouseProductIds).stream().collect(Collectors.toSet());
     }
 
     public ProductResponseDTO toProductResponse(Product product) {
@@ -55,13 +90,18 @@ public class ProductMapper {
                 product.getProductName(),
                 product.getDescription(),
                 product.getBrand(),
-                product.getCategory().getCategoryEnum(),
+                product.getCategory(),
                 product.getPurchasePrice(),
                 product.getSalePrice(),
                 product.getStockQuantity(),
                 product.getMinimumQuantity(),
                 product.getCodeSku(),
-                product.getAvailability().getAvailability()
+                product.getInventoryItemId(), // Incluído aqui
+                product.getAvailability(),
+                product.getExpirationDate(),
+                product.getStatus(),
+                product.getInventoryMovements(),
+                product.getWarehouseProducts()
         );
     }
 
@@ -100,10 +140,13 @@ public class ProductMapper {
         Optional.ofNullable(dto.salePrice()).ifPresent(product::setSalePrice);
         Optional.ofNullable(dto.stockQuantity()).ifPresent(product::setStockQuantity);
         Optional.ofNullable(dto.minimumQuantity()).ifPresent(product::setMinimumQuantity);
-        Optional.ofNullable(dto.codeSKU()).ifPresent(product::setCodeSku);
+        Optional.ofNullable(dto.codeSku()).ifPresent(product::setCodeSku);
         Optional.ofNullable(dto.availability()).ifPresent(availabilityEnum -> {
             Availability availability = getAvailability(availabilityEnum);
             product.setAvailability(availability);
         });
+        Optional.ofNullable(dto.expirationDate()).ifPresent(product::setExpirationDate);
+        Optional.ofNullable(dto.status()).ifPresent(product::setStatus);
+        Optional.ofNullable(dto.inventoryItemId()).ifPresent(product::setInventoryItemId); // Atualização aqui
     }
 }

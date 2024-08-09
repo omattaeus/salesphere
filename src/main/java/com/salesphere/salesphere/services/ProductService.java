@@ -13,11 +13,11 @@ import com.salesphere.salesphere.repositories.AvailabilityRepository;
 import com.salesphere.salesphere.services.converter.ProductUpdater;
 import com.salesphere.salesphere.services.email.EmailService;
 import com.salesphere.salesphere.services.scheduler.StockCheckStrategy;
+import com.salesphere.salesphere.services.validator.StockValidator;
 import com.salesphere.salesphere.services.websocket.StockWebSocketHandler;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ReflectionUtils;
@@ -39,16 +39,19 @@ public class ProductService implements StockCheckStrategy {
     private final ProductUpdater productUpdater;
     private final EmailService emailService;
     private final StockWebSocketHandler stockWebSocketHandler;
+    private final StockValidator stockValidator;
 
     public ProductService(ProductRepository repository, AvailabilityRepository availabilityRepository,
                           ProductMapper productMapper, ProductUpdater productUpdater,
-                          EmailService emailService, StockWebSocketHandler stockWebSocketHandler) {
+                          EmailService emailService, StockWebSocketHandler stockWebSocketHandler,
+                          StockValidator stockValidator) {
         this.repository = repository;
         this.availabilityRepository = availabilityRepository;
         this.productMapper = productMapper;
         this.productUpdater = productUpdater;
         this.emailService = emailService;
         this.stockWebSocketHandler = stockWebSocketHandler;
+        this.stockValidator = stockValidator;
     }
 
     public ProductResponseDTO getProductById(Long productId) {
@@ -95,7 +98,8 @@ public class ProductService implements StockCheckStrategy {
 
     public ProductResponseDTO createProduct(ProductRequestDTO productRequestDTO) {
         try {
-            validateProductRequest(productRequestDTO);
+            stockValidator.validateRequiredFields(productRequestDTO);
+            stockValidator.validateSKU(productRequestDTO.codeSku(), repository);
             Product product = productMapper.toProduct(productRequestDTO);
             Availability availability = availabilityRepository.findByAvailability(productRequestDTO.availability())
                     .orElseThrow(() -> new ValidationException("Disponibilidade não encontrada"));
@@ -113,6 +117,9 @@ public class ProductService implements StockCheckStrategy {
         try {
             Product existingProduct = repository.findById(productId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto não encontrado"));
+
+            stockValidator.validateRequiredFields(productRequestDTO);
+            stockValidator.validateSKU(productRequestDTO.codeSku(), repository);
 
             productMapper.updateProductFromDto(productRequestDTO, existingProduct);
             validateProduct(existingProduct);

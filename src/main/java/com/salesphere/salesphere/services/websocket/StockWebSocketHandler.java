@@ -42,6 +42,18 @@ public class StockWebSocketHandler extends AbstractWebSocketHandler {
         }
     }
 
+    public void broadcastMessage(String message) {
+        for (WebSocketSession session : sessions) {
+            try {
+                if (session.isOpen()) {
+                    session.sendMessage(new TextMessage(message));
+                }
+            } catch (IOException e) {
+                logger.error("Erro ao enviar mensagem via WebSocket para a sessão {}: {}", session.getId(), e.getMessage());
+            }
+        }
+    }
+
     public Set<WebSocketSession> getSessions() {
         return new HashSet<>(sessions);
     }

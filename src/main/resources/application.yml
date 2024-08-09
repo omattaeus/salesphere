@@ -1,6 +1,14 @@
 server:
   port: 8080
 spring:
+  jackson:
+    serialization:
+      FAIL_ON_EMPTY_BEANS: false
+    deserialization:
+      FAIL_ON_UNKNOWN_PROPERTIES: false
+    property-naming-strategy: SNAKE_CASE
+    date-format: yyyy-MM-dd'T'HH:mm:ss
+    default-property-inclusion: non_null
   datasource:
     url: ${DB_URL}
     username: ${DB_USER}
@@ -20,9 +28,14 @@ spring:
           auth: true
           starttls:
             enable: true
+
 springdoc:
   api-docs:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
   packages-to-scan: com.salesphere.salesphere.controllers
+shopify:
+  api:
+    base-url: ${SHOPIFY_URL}
+    access-token: ${TOKEN_SHOPIFY}

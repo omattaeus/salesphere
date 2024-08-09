@@ -1,7 +1,6 @@
 package com.salesphere.salesphere.services.email;
 
 import com.salesphere.salesphere.exceptions.EmailSendingException;
-import com.salesphere.salesphere.exceptions.EmailSendingTestException;
 import com.salesphere.salesphere.models.Product;
 import com.salesphere.salesphere.services.report.ReportService;
 import jakarta.mail.MessagingException;
@@ -40,12 +39,31 @@ public class DefaultEmailService implements EmailService {
             addAttachmentsToMessageHelper(products, messageHelper);
 
             mailSender.send(mimeMessage);
-        } catch (EmailSendingTestException e) {
+        } catch (EmailSendingException e) {
             throw new EmailSendingException("Erro ao enviar o alerta de estoque baixo. Verifique os detalhes dos produtos.", e);
         } catch (IOException e) {
             throw new EmailSendingException("Erro ao processar os relatórios anexos do alerta de estoque baixo.", e);
+        } catch (MessagingException e) {
+            throw new EmailSendingException("Erro ao criar o e-mail com anexos.", e);
         } catch (Exception e) {
             throw new EmailSendingException("Ocorreu um erro inesperado ao enviar o alerta de estoque baixo.", e);
+        }
+    }
+
+    @Override
+    public void sendStockReplenishmentAlert(String message) {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        try {
+            MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+            messageHelper.setTo("contatomateusgd@gmail.com");
+            messageHelper.setSubject("Alerta de Reabastecimento de Estoque");
+            messageHelper.setText(message, true);
+
+            mailSender.send(mimeMessage);
+        } catch (MessagingException e) {
+            throw new EmailSendingException("Erro ao enviar o alerta de reabastecimento de estoque.", e);
+        } catch (Exception e) {
+            throw new EmailSendingException("Ocorreu um erro inesperado ao enviar o alerta de reabastecimento de estoque.", e);
         }
     }
 
@@ -69,7 +87,7 @@ public class DefaultEmailService implements EmailService {
         messageHelper.addAttachment(excelReportResource.getFilename(), excelReportResource);
     }
 
-    public String buildEmailContent(List<Product> products) {
+    private String buildEmailContent(List<Product> products) {
         StringBuilder sb = new StringBuilder();
 
         sb.append("<html>")
@@ -82,20 +100,18 @@ public class DefaultEmailService implements EmailService {
                 .append("table { width: 100%; border-collapse: collapse; margin: 20px 0; }")
                 .append("th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }")
                 .append("th { background-color: #f2f2f2; }")
-                .append(".footer { margin-top: 20px; padding: 10px; text-align: center; font-size: 0.9em; color: #777; }")
                 .append("</style>")
                 .append("</head>")
                 .append("<body>")
                 .append("<div class='container'>")
-                .append("<h2>Alerta de Estoque Baixo</h2>")
-                .append("<p>Os seguintes produtos estão com estoque baixo. Confira os relatórios em anexo para mais detalhes.</p>")
+                .append("<h2>Relatório de Estoque Baixo</h2>")
+                .append("<p>Segue em anexo o relatório de produtos com estoque baixo.</p>")
                 .append("<table>")
                 .append("<tr>")
                 .append("<th>Nome do Produto</th>")
                 .append("<th>Descrição</th>")
                 .append("<th>Marca</th>")
                 .append("<th>Categoria</th>")
-                .append("<th>SKU</th>")
                 .append("<th>Preço de Compra</th>")
                 .append("<th>Preço de Venda</th>")
                 .append("<th>Quantidade em Estoque</th>")
@@ -108,18 +124,14 @@ public class DefaultEmailService implements EmailService {
                     .append("<td>").append(product.getDescription() != null ? product.getDescription() : "N/A").append("</td>")
                     .append("<td>").append(product.getBrand() != null ? product.getBrand() : "N/A").append("</td>")
                     .append("<td>").append(product.getCategory() != null ? product.getCategory().toString() : "N/A").append("</td>")
-                    .append("<td>").append(product.getCodeSku() != null ? product.getCodeSku() : "N/A").append("</td>")
-                    .append("<td>").append(String.format("%.2f", product.getPurchasePrice()).replace(".", ",")).append("</td>")
-                    .append("<td>").append(String.format("%.2f", product.getSalePrice()).replace(".", ",")).append("</td>")
+                    .append("<td>").append(String.format("%.2f", product.getPurchasePrice())).append("</td>")
+                    .append("<td>").append(String.format("%.2f", product.getSalePrice())).append("</td>")
                     .append("<td>").append(product.getStockQuantity()).append("</td>")
                     .append("<td>").append(product.getMinimumQuantity()).append("</td>")
                     .append("</tr>");
         }
 
         sb.append("</table>")
-                .append("<div class='footer'>")
-                .append("<p>Obrigado por acompanhar o estoque.</p>")
-                .append("</div>")
                 .append("</div>")
                 .append("</body>")
                 .append("</html>");
