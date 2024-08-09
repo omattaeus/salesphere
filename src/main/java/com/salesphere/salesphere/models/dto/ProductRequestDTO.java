@@ -9,19 +9,19 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record ProductRequestDTO(
-        String productName,
+        @JsonProperty("product_name") String productName,
         String description,
         String brand,
         CategoryEnum category,
-        Double purchasePrice,
-        Double salePrice,
-        Long stockQuantity,
-        Long minimumQuantity,
+        @JsonProperty("purchase_price") Double purchasePrice,
+        @JsonProperty("sale_price") Double salePrice,
+        @JsonProperty("stock_quantity") Long stockQuantity,
+        @JsonProperty("minimum_quantity") Long minimumQuantity,
         @JsonProperty("code_sku") String codeSku,
         AvailabilityEnum availability,
-        LocalDate expirationDate,
+        @JsonProperty("expiration_date") LocalDate expirationDate,
         StatusEnum status,
-        List<Long> inventoryMovementIds,
-        List<Long> warehouseProductIds,
-        Long inventoryItemId
+        @JsonProperty("inventory_movement_ids")List<Long> inventoryMovementIds,
+        @JsonProperty("warehouse_product_ids") List<Long> warehouseProductIds,
+        @JsonProperty("inventory_item_id") Long inventoryItemId
 ) {}
