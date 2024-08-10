@@ -13,7 +13,7 @@ public class StockScheduler {
         this.productService = productService;
     }
 
-    @Scheduled(cron = "0 0 * * * *")
+    @Scheduled(cron = "0 0 0 * * ?")
     public void checkStockPeriodically() {
         productService.checkStock();
     }

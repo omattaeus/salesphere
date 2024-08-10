@@ -1,11 +1,11 @@
 package com.salesphere.salesphere.services;
 
-import com.salesphere.salesphere.exceptions.ErrorResponse;
 import com.salesphere.salesphere.mapper.ProductMapper;
 import com.salesphere.salesphere.models.Product;
 import com.salesphere.salesphere.models.Availability;
 import com.salesphere.salesphere.models.dto.ProductRequestDTO;
 import com.salesphere.salesphere.models.dto.ProductResponseDTO;
+import com.salesphere.salesphere.models.dto.ProductSaleDTO;
 import com.salesphere.salesphere.models.enums.AvailabilityEnum;
 import com.salesphere.salesphere.models.enums.CategoryEnum;
 import com.salesphere.salesphere.repositories.ProductRepository;
@@ -75,6 +75,18 @@ public class ProductService implements StockCheckStrategy {
         }
     }
 
+    public List<ProductSaleDTO> getAllProductsForSale() {
+        List<Product> allProducts = repository.findAll();
+        return allProducts.stream()
+                .map(product -> new ProductSaleDTO(
+                        product.getId(),
+                        product.getProductName(),
+                        product.getSalePrice(),
+                        product.getStockQuantity()
+                ))
+                .collect(Collectors.toList());
+    }
+
     public List<ProductResponseDTO> createProducts(List<ProductRequestDTO> productRequestDTOs) {
         productRequestDTOs.forEach(this::validateProductRequest);
 
@@ -137,6 +149,17 @@ public class ProductService implements StockCheckStrategy {
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao atualizar produto.");
         }
+    }
+
+    public void updateProductStock(Long productId, Long quantitySold) {
+        Product product = repository.findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto não encontrado"));
+        Long newStockQuantity = product.getStockQuantity() - quantitySold;
+        if (newStockQuantity < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quantidade em estoque insuficiente para o produto: " + product.getProductName());
+        }
+        product.setStockQuantity(newStockQuantity);
+        repository.save(product);
     }
 
     public ProductResponseDTO partialUpdateProduct(Long productId, Map<String, Object> updates) {

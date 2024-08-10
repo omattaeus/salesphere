@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Processar Venda</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+<div class="container mt-5">
+    <h2>Processar Venda</h2>
+    <form id="payment-form">
+        <div class="form-group">
+            <label for="product">Produto</label>
+            <select id="product" class="form-control" required>
+                <option value="">Selecione um produto</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="quantity">Quantidade</label>
+            <input type="number" id="quantity" class="form-control" required min="1">
+        </div>
+        <div class="form-group">
+            <label for="product-price">Preço do Produto</label>
+            <input type="text" id="product-price" class="form-control" readonly>
+        </div>
+        <div class="form-group">
+            <label for="total-price">Valor Total</label>
+            <input type="text" id="total-price" class="form-control" readonly>
+        </div>
+        <div class="form-group">
+            <label for="card-element">Dados do Cartão</label>
+            <div id="card-element"></div>
+            <div id="card-errors" role="alert"></div>
+        </div>
+        <button type="submit" class="btn btn-primary">Pagar</button>
+    </form>
+</div>
+<script>
+    const stripe = Stripe('pk_test_51PY7wrAps7EZIAgBNkkHv0jkecrjhb7f1UruMwKhL4dkC15gWaN9AgDdyz1gTDlu7xElI9L5kiI8YO5gXO3ctAIP00PFXRLeOV');
+    const elements = stripe.elements();
+    const cardElement = elements.create('card');
+    cardElement.mount('#card-element');
+
+    async function fetchProducts() {
+        try {
+            const response = await fetch('/products/for-sale');
+            if (!response.ok) {
+                throw new Error('Erro ao buscar produtos');
+            }
+            const products = await response.json();
+            const productSelect = document.getElementById('product');
+            productSelect.innerHTML = '<option value="">Selecione um produto</option>';
+            products.forEach(product => {
+                const option = document.createElement('option');
+                option.value = product.id;
+                option.setAttribute('data-price', product.sale_price);
+                option.textContent = `${product.product_name} - R$${parseFloat(product.sale_price).toFixed(2)}`;
+                productSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Erro ao buscar produtos:', error);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', fetchProducts);
+
+    function updatePrice() {
+        const productSelect = document.getElementById('product');
+        const selectedOption = productSelect.options[productSelect.selectedIndex];
+        const price = selectedOption.getAttribute('data-price');
+        const quantity = document.getElementById('quantity').value;
+
+        if (price && !isNaN(price)) {
+            document.getElementById('product-price').value = `R$${parseFloat(price).toFixed(2)}`;
+            document.getElementById('total-price').value = `R$${(parseFloat(price) * (quantity || 1)).toFixed(2)}`;
+        } else {
+            document.getElementById('product-price').value = '';
+            document.getElementById('total-price').value = '';
+        }
+    }
+
+    document.getElementById('product').addEventListener('change', updatePrice);
+    document.getElementById('quantity').addEventListener('input', updatePrice);
+
+    const form = document.getElementById('payment-form');
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const {paymentMethod, error} = await stripe.createPaymentMethod({
+            type: 'card',
+            card: cardElement,
+        });
+
+        if (error) {
+            document.getElementById('card-errors').textContent = error.message;
+        } else {
+            const productId = document.getElementById('product').value;
+            const quantity = document.getElementById('quantity').value;
+
+            if (!productId || !quantity) {
+                alert('Por favor, selecione um produto e insira a quantidade.');
+                return;
+            }
+
+            const saleItems = [
+                {
+                    productId: productId,
+                    quantity: quantity
+                }
+            ];
+
+            console.log('Dados da venda:', {
+                saleItems: saleItems,
+                paymentDetails: {
+                    paymentMethodId: paymentMethod.id
+                }
+            });
+
+            try {
+                const response = await fetch('/api/sales/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        saleItems: saleItems,
+                        paymentDetails: {
+                            paymentMethodId: paymentMethod.id
+                        }
+                    })
+                });
+
+                const contentType = response.headers.get('Content-Type');
+                if (contentType && contentType.includes('application/json')) {
+                    const data = await response.json();
+                    console.log('Resposta da API:', data);
+                    if (data.success) {
+                        alert(data.message);
+                    } else {
+                        alert('Falha no processamento do pagamento.');
+                    }
+                } else {
+                    throw new Error('Resposta inesperada do servidor');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao processar a venda.');
+            }
+        }
+    });
+</script>
+</body>
+</html>

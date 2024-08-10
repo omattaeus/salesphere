@@ -21,5 +21,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT p FROM Product p WHERE p.stockQuantity < :minimumQuantity")
     List<Product> findByStockQuantityLessThan(Long minimumQuantity);
 
+    @Query("SELECT p FROM Product p WHERE p.productName LIKE %:name% AND p.stockQuantity >= :quantity")
+    List<Product> findByProductNameAndStockQuantityGreaterThan(@Param("name") String name, @Param("quantity") Long quantity);
+
     boolean existsByCodeSku(String codeSku);
 }

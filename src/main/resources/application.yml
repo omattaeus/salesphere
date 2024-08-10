@@ -1,6 +1,10 @@
 server:
   port: 8080
 spring:
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
   jackson:
     serialization:
       FAIL_ON_EMPTY_BEANS: false
@@ -39,3 +43,7 @@ shopify:
   api:
     base-url: ${SHOPIFY_URL}
     access-token: ${TOKEN_SHOPIFY}
+stripe:
+  api:
+    secretKey: ${STRIPE_KEY}
+    publicKey: ${STRIPE_PUBLIC_KEY}

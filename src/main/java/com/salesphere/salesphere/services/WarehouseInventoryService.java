@@ -39,7 +39,7 @@ public class WarehouseInventoryService {
         warehouseProductRepository.save(fromWarehouseProduct);
 
         WarehouseProduct toWarehouseProduct = warehouseProductRepository.findByWarehouseAndProduct(toWarehouseId, productId)
-                .orElse(new WarehouseProduct(toWarehouse, product, 0)); // Usa o construtor correto
+                .orElse(new WarehouseProduct(toWarehouse, product, 0));
 
         toWarehouseProduct.setQuantity(toWarehouseProduct.getQuantity() + quantity);
         warehouseProductRepository.save(toWarehouseProduct);

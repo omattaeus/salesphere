@@ -4,6 +4,7 @@ import com.salesphere.salesphere.exceptions.ErrorResponse;
 import com.salesphere.salesphere.models.Product;
 import com.salesphere.salesphere.models.dto.ProductRequestDTO;
 import com.salesphere.salesphere.models.dto.ProductResponseDTO;
+import com.salesphere.salesphere.models.dto.ProductSaleDTO;
 import com.salesphere.salesphere.services.ProductService;
 import com.salesphere.salesphere.services.email.EmailService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -72,6 +73,19 @@ public class ProductController {
     )
     public ResponseEntity<List<ProductResponseDTO>> getAllProducts() {
         List<ProductResponseDTO> productList = productService.getAllProducts();
+        return ResponseEntity.ok(productList);
+    }
+
+    @GetMapping("/for-sale")
+    @Operation(summary = "Find all products for sale", description = "Finds all products available for sale",
+            responses = {
+                    @ApiResponse(description = "Success", responseCode = "200",
+                            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = ProductSaleDTO.class)))),
+                    @ApiResponse(description = "Internal Server Error", responseCode = "500", content = @Content)
+            }
+    )
+    public ResponseEntity<List<ProductSaleDTO>> getAllProductsForSale() {
+        List<ProductSaleDTO> productList = productService.getAllProductsForSale();
         return ResponseEntity.ok(productList);
     }
 
