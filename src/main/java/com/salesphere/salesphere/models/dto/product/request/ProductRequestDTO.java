@@ -1,4 +1,4 @@
-package com.salesphere.salesphere.models.dto;
+package com.salesphere.salesphere.models.dto.product.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.salesphere.salesphere.models.enums.AvailabilityEnum;

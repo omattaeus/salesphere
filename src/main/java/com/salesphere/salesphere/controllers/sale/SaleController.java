@@ -1,8 +1,8 @@
 package com.salesphere.salesphere.controllers.sale;
 
 import com.salesphere.salesphere.models.sale.Sale;
-import com.salesphere.salesphere.models.dto.PaymentDetailsDTO;
-import com.salesphere.salesphere.models.dto.ProductSaleDTO;
+import com.salesphere.salesphere.models.dto.payment.PaymentDetailsDTO;
+import com.salesphere.salesphere.models.dto.payment.sale.ProductSaleDTO;
 import com.salesphere.salesphere.services.payment.PaymentService;
 import com.salesphere.salesphere.services.payment.sale.SaleService;
 import com.salesphere.salesphere.services.discount.DiscountPolicy;

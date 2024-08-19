@@ -1,7 +1,7 @@
 package com.salesphere.salesphere.mapper;
 
-import com.salesphere.salesphere.models.dto.ProductRequestDTO;
-import com.salesphere.salesphere.models.dto.ProductResponseDTO;
+import com.salesphere.salesphere.models.dto.product.request.ProductRequestDTO;
+import com.salesphere.salesphere.models.dto.product.response.ProductResponseDTO;
 import com.salesphere.salesphere.models.enums.AvailabilityEnum;
 import com.salesphere.salesphere.models.enums.CategoryEnum;
 import com.salesphere.salesphere.models.inventory.InventoryMovement;

@@ -1,4 +1,4 @@
-package com.salesphere.salesphere.models.dto;
+package com.salesphere.salesphere.models.dto.product.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.salesphere.salesphere.models.product.Availability;

@@ -2,7 +2,7 @@ package com.salesphere.salesphere.services.product;
 
 import com.salesphere.salesphere.mapper.ProductMapper;
 import com.salesphere.salesphere.models.product.Product;
-import com.salesphere.salesphere.models.dto.ProductResponseDTO;
+import com.salesphere.salesphere.models.dto.product.response.ProductResponseDTO;
 import com.salesphere.salesphere.repositories.product.ProductRepository;
 import org.springframework.stereotype.Service;
 

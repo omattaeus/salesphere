@@ -1,7 +1,7 @@
 package com.salesphere.salesphere.controllers.view;
 
 import com.salesphere.salesphere.services.product.ProductService;
-import com.salesphere.salesphere.models.dto.ProductResponseDTO;
+import com.salesphere.salesphere.models.dto.product.response.ProductResponseDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

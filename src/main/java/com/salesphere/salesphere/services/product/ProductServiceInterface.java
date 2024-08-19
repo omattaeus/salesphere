@@ -1,6 +1,6 @@
 package com.salesphere.salesphere.services.product;
 
-import com.salesphere.salesphere.models.dto.ProductResponseDTO;
+import com.salesphere.salesphere.models.dto.product.response.ProductResponseDTO;
 
 import java.util.List;
 

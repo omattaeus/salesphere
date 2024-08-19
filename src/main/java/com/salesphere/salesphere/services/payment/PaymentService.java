@@ -2,7 +2,7 @@ package com.salesphere.salesphere.services.payment;
 
 import com.salesphere.salesphere.models.sale.Sale;
 import com.salesphere.salesphere.exceptions.PaymentProcessingException;
-import com.salesphere.salesphere.models.dto.PaymentDetailsDTO;
+import com.salesphere.salesphere.models.dto.payment.PaymentDetailsDTO;
 import com.stripe.Stripe;
 import com.stripe.exception.ApiException;
 import com.stripe.exception.CardException;

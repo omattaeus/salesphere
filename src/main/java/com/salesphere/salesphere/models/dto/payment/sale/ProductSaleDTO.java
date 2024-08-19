@@ -1,4 +1,4 @@
-package com.salesphere.salesphere.models.dto;
+package com.salesphere.salesphere.models.dto.payment.sale;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

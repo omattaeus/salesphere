@@ -3,7 +3,7 @@ package com.salesphere.salesphere.services.payment.sale;
 import com.salesphere.salesphere.models.product.Product;
 import com.salesphere.salesphere.models.sale.Sale;
 import com.salesphere.salesphere.models.sale.SaleItem;
-import com.salesphere.salesphere.models.dto.ProductSaleDTO;
+import com.salesphere.salesphere.models.dto.payment.sale.ProductSaleDTO;
 import com.salesphere.salesphere.repositories.product.ProductRepository;
 import com.salesphere.salesphere.repositories.sale.SaleRepository;
 import com.salesphere.salesphere.repositories.sale.SaleItemRepository;

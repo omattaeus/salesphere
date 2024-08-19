@@ -2,9 +2,9 @@ package com.salesphere.salesphere.controllers.product;
 
 import com.salesphere.salesphere.exceptions.ErrorResponse;
 import com.salesphere.salesphere.models.product.Product;
-import com.salesphere.salesphere.models.dto.ProductRequestDTO;
-import com.salesphere.salesphere.models.dto.ProductResponseDTO;
-import com.salesphere.salesphere.models.dto.ProductSaleDTO;
+import com.salesphere.salesphere.models.dto.product.request.ProductRequestDTO;
+import com.salesphere.salesphere.models.dto.product.response.ProductResponseDTO;
+import com.salesphere.salesphere.models.dto.payment.sale.ProductSaleDTO;
 import com.salesphere.salesphere.services.product.ProductService;
 import com.salesphere.salesphere.services.email.EmailService;
 import io.swagger.v3.oas.annotations.Operation;

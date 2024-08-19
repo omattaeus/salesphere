@@ -1,6 +1,6 @@
 package com.salesphere.salesphere.services.product.stock.validator;
 
-import com.salesphere.salesphere.models.dto.ProductRequestDTO;
+import com.salesphere.salesphere.models.dto.product.request.ProductRequestDTO;
 import com.salesphere.salesphere.repositories.product.ProductRepository;
 import jakarta.validation.ValidationException;
 import org.springframework.stereotype.Component;
