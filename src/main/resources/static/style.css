@@ -1,0 +1,19 @@
+body {
+    padding-top: 20px;
+}
+
+.navbar {
+    margin-bottom: 20px;
+}
+
+.table thead th {
+    background-color: #f8f9fa;
+}
+
+.table tbody tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.btn-sm {
+    margin-right: 5px;
+}

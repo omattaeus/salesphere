@@ -1,6 +1,6 @@
 package com.salesphere.salesphere.services.report;
 
-import com.salesphere.salesphere.models.Product;
+import com.salesphere.salesphere.models.product.Product;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -1,6 +1,6 @@
 package com.salesphere.salesphere.services.scheduler;
 
-import com.salesphere.salesphere.services.ProductService;
+import com.salesphere.salesphere.services.product.ProductService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

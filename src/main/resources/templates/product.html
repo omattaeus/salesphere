@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Produtos</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/product.css" th:href="@{/static/product.css}">
+</head>
+<body>
+<header>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="#">Salesphere</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Página Inicial</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">Produtos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Vendas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Relatórios</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<main class="container mt-4">
+    <section class="product-list">
+        <h2 class="mb-4">Lista de Produtos</h2>
+        <button id="addProductBtn" class="btn btn-primary mb-3">Adicionar Produto</button>
+        <div id="productsContainer" class="row">
+            <!-- Produtos serão listados aqui -->
+        </div>
+    </section>
+
+    <section class="product-details d-none" id="productDetails">
+        <h2 class="mb-4">Detalhes do Produto</h2>
+        <div id="productInfo" class="mb-3">
+            <!-- Detalhes do produto serão carregados aqui -->
+        </div>
+        <button id="editProductBtn" class="btn btn-warning me-2">Editar Produto</button>
+        <button id="deleteProductBtn" class="btn btn-danger">Excluir Produto</button>
+    </section>
+</main>
+
+<footer class="bg-light py-3 mt-4">
+    <div class="container text-center">
+        <p class="mb-0">&copy; 2024 Salesphere</p>
+    </div>
+</footer>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="/static/js/script.js"></script>
+</body>
+</html>

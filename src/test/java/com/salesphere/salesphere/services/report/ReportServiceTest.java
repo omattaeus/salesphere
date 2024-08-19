@@ -1,7 +1,7 @@
 package com.salesphere.salesphere.services.report;
 
 import com.itextpdf.text.DocumentException;
-import com.salesphere.salesphere.models.Product;
+import com.salesphere.salesphere.models.product.Product;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;

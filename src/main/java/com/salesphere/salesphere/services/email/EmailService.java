@@ -1,6 +1,6 @@
 package com.salesphere.salesphere.services.email;
 
-import com.salesphere.salesphere.models.Product;
+import com.salesphere.salesphere.models.product.Product;
 
 import java.util.List;
 

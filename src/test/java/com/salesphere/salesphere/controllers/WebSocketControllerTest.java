@@ -1,5 +1,6 @@
 package com.salesphere.salesphere.controllers;
 
+import com.salesphere.salesphere.controllers.websocket.WebSocketController;
 import com.salesphere.salesphere.services.websocket.StockWebSocketHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

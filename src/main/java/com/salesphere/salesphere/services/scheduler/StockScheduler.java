@@ -1,6 +1,6 @@
 package com.salesphere.salesphere.services.scheduler;
 
-import com.salesphere.salesphere.services.ProductService;
+import com.salesphere.salesphere.services.product.ProductService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 

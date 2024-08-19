@@ -1,7 +1,7 @@
 package com.salesphere.salesphere.services.scheduler;
 
-import com.salesphere.salesphere.models.Product;
-import com.salesphere.salesphere.repositories.ProductRepository;
+import com.salesphere.salesphere.models.product.Product;
+import com.salesphere.salesphere.repositories.product.ProductRepository;
 import com.salesphere.salesphere.services.email.EmailService;
 import com.salesphere.salesphere.services.websocket.StockWebSocketHandler;
 import org.springframework.scheduling.annotation.Scheduled;

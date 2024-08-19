@@ -1,7 +1,7 @@
 package com.salesphere.salesphere.services.converter;
 
-import com.salesphere.salesphere.models.Availability;
-import com.salesphere.salesphere.models.Product;
+import com.salesphere.salesphere.models.product.Availability;
+import com.salesphere.salesphere.models.product.Product;
 import com.salesphere.salesphere.models.enums.AvailabilityEnum;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;

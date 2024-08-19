@@ -1,7 +1,7 @@
 package com.salesphere.salesphere.services.email;
 
 import com.salesphere.salesphere.exceptions.EmailSendingException;
-import com.salesphere.salesphere.models.Product;
+import com.salesphere.salesphere.models.product.Product;
 import com.salesphere.salesphere.services.report.ReportService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 
 @Service
@@ -87,39 +89,14 @@ public class DefaultEmailService implements EmailService {
         messageHelper.addAttachment(excelReportResource.getFilename(), excelReportResource);
     }
 
-    private String buildEmailContent(List<Product> products) {
-        StringBuilder sb = new StringBuilder();
+    private String buildEmailContent(List<Product> products) throws IOException {
+        String filePath = "src/main/resources/templates/low_stock_alert.html"; // Caminho do template HTML
+        String emailContent = new String(Files.readAllBytes(Paths.get(filePath)));
 
-        sb.append("<html>")
-                .append("<head>")
-                .append("<style>")
-                .append("body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }")
-                .append(".container { width: 80%; margin: auto; padding: 20px; background: #fff; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }")
-                .append("h2 { color: #333; }")
-                .append("p { font-size: 1em; color: #555; }")
-                .append("table { width: 100%; border-collapse: collapse; margin: 20px 0; }")
-                .append("th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }")
-                .append("th { background-color: #f2f2f2; }")
-                .append("</style>")
-                .append("</head>")
-                .append("<body>")
-                .append("<div class='container'>")
-                .append("<h2>Relatório de Estoque Baixo</h2>")
-                .append("<p>Segue em anexo o relatório de produtos com estoque baixo.</p>")
-                .append("<table>")
-                .append("<tr>")
-                .append("<th>Nome do Produto</th>")
-                .append("<th>Descrição</th>")
-                .append("<th>Marca</th>")
-                .append("<th>Categoria</th>")
-                .append("<th>Preço de Compra</th>")
-                .append("<th>Preço de Venda</th>")
-                .append("<th>Quantidade em Estoque</th>")
-                .append("<th>Quantidade Mínima</th>")
-                .append("</tr>");
+        StringBuilder tableRows = new StringBuilder();
 
         for (Product product : products) {
-            sb.append("<tr>")
+            tableRows.append("<tr>")
                     .append("<td>").append(product.getProductName() != null ? product.getProductName() : "N/A").append("</td>")
                     .append("<td>").append(product.getDescription() != null ? product.getDescription() : "N/A").append("</td>")
                     .append("<td>").append(product.getBrand() != null ? product.getBrand() : "N/A").append("</td>")
@@ -131,11 +108,7 @@ public class DefaultEmailService implements EmailService {
                     .append("</tr>");
         }
 
-        sb.append("</table>")
-                .append("</div>")
-                .append("</body>")
-                .append("</html>");
-
-        return sb.toString();
+        emailContent = emailContent.replace("<!-- Dados dos produtos serão inseridos aqui -->", tableRows.toString());
+        return emailContent;
     }
 }

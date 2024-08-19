@@ -1,6 +1,6 @@
 package com.salesphere.salesphere.services.discount;
 
-import com.salesphere.salesphere.models.Product;
+import com.salesphere.salesphere.models.product.Product;
 import org.springframework.stereotype.Component;
 
 @Component

@@ -1,0 +1,26 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+header {
+    margin-bottom: 20px;
+}
+
+.product-list button {
+    margin-bottom: 10px;
+}
+
+.product-details {
+    display: none;
+}
+
+.product-details.d-none {
+    display: none;
+}
+
+footer {
+    border-top: 1px solid #ddd;
+}

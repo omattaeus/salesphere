@@ -1,7 +1,7 @@
 package com.salesphere.salesphere.services.report;
 
-import com.salesphere.salesphere.models.Product;
-import com.salesphere.salesphere.repositories.ProductRepository;
+import com.salesphere.salesphere.models.product.Product;
+import com.salesphere.salesphere.repositories.product.ProductRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

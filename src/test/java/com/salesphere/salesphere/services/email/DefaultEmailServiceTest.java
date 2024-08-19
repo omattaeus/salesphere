@@ -2,9 +2,9 @@ package com.salesphere.salesphere.services.email;
 
 import com.salesphere.salesphere.exceptions.EmailSendingException;
 import com.salesphere.salesphere.exceptions.EmailSendingTestException;
-import com.salesphere.salesphere.models.Availability;
-import com.salesphere.salesphere.models.Category;
-import com.salesphere.salesphere.models.Product;
+import com.salesphere.salesphere.models.product.Availability;
+import com.salesphere.salesphere.models.product.Category;
+import com.salesphere.salesphere.models.product.Product;
 import com.salesphere.salesphere.services.report.ReportService;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;

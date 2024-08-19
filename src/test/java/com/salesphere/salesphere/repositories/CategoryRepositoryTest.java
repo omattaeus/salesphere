@@ -1,7 +1,8 @@
 package com.salesphere.salesphere.repositories;
 
-import com.salesphere.salesphere.models.Category;
+import com.salesphere.salesphere.models.product.Category;
 import com.salesphere.salesphere.models.enums.CategoryEnum;
+import com.salesphere.salesphere.repositories.product.CategoryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

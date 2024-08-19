@@ -1,10 +1,10 @@
 package com.salesphere.salesphere.models.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.salesphere.salesphere.models.Availability;
-import com.salesphere.salesphere.models.Category;
-import com.salesphere.salesphere.models.InventoryMovement;
-import com.salesphere.salesphere.models.WarehouseProduct;
+import com.salesphere.salesphere.models.product.Availability;
+import com.salesphere.salesphere.models.product.Category;
+import com.salesphere.salesphere.models.inventory.InventoryMovement;
+import com.salesphere.salesphere.models.product.warehouse.WarehouseProduct;
 import com.salesphere.salesphere.models.enums.StatusEnum;
 
 import java.time.LocalDate;

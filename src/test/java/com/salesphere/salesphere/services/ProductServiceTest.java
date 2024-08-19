@@ -1,16 +1,17 @@
 package com.salesphere.salesphere.services;
 
 import com.salesphere.salesphere.mapper.ProductMapper;
-import com.salesphere.salesphere.models.Availability;
-import com.salesphere.salesphere.models.Category;
-import com.salesphere.salesphere.models.Product;
+import com.salesphere.salesphere.models.product.Availability;
+import com.salesphere.salesphere.models.product.Category;
+import com.salesphere.salesphere.models.product.Product;
 import com.salesphere.salesphere.models.dto.ProductRequestDTO;
 import com.salesphere.salesphere.models.dto.ProductResponseDTO;
 import com.salesphere.salesphere.models.enums.AvailabilityEnum;
 import com.salesphere.salesphere.models.enums.CategoryEnum;
-import com.salesphere.salesphere.repositories.ProductRepository;
-import com.salesphere.salesphere.repositories.AvailabilityRepository;
+import com.salesphere.salesphere.repositories.product.ProductRepository;
+import com.salesphere.salesphere.repositories.product.AvailabilityRepository;
 import com.salesphere.salesphere.services.email.EmailService;
+import com.salesphere.salesphere.services.product.ProductService;
 import com.salesphere.salesphere.services.websocket.StockWebSocketHandler;
 import jakarta.validation.ValidationException;
 import org.junit.jupiter.api.BeforeEach;

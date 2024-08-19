@@ -1,15 +1,18 @@
 package com.salesphere.salesphere.mapper;
 
-import com.salesphere.salesphere.models.*;
 import com.salesphere.salesphere.models.dto.ProductRequestDTO;
 import com.salesphere.salesphere.models.dto.ProductResponseDTO;
 import com.salesphere.salesphere.models.enums.AvailabilityEnum;
 import com.salesphere.salesphere.models.enums.CategoryEnum;
-import com.salesphere.salesphere.models.enums.StatusEnum;
-import com.salesphere.salesphere.repositories.CategoryRepository;
-import com.salesphere.salesphere.repositories.AvailabilityRepository;
-import com.salesphere.salesphere.repositories.InventoryMovementRepository;
-import com.salesphere.salesphere.repositories.WarehouseProductRepository;
+import com.salesphere.salesphere.models.inventory.InventoryMovement;
+import com.salesphere.salesphere.models.product.Availability;
+import com.salesphere.salesphere.models.product.Category;
+import com.salesphere.salesphere.models.product.Product;
+import com.salesphere.salesphere.models.product.warehouse.WarehouseProduct;
+import com.salesphere.salesphere.repositories.product.CategoryRepository;
+import com.salesphere.salesphere.repositories.product.AvailabilityRepository;
+import com.salesphere.salesphere.repositories.inventory.InventoryMovementRepository;
+import com.salesphere.salesphere.repositories.product.warehouse.WarehouseProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

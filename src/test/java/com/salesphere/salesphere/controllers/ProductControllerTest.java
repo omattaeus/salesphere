@@ -1,12 +1,13 @@
 package com.salesphere.salesphere.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.salesphere.salesphere.models.Product;
+import com.salesphere.salesphere.controllers.product.ProductController;
+import com.salesphere.salesphere.models.product.Product;
 import com.salesphere.salesphere.models.dto.ProductRequestDTO;
 import com.salesphere.salesphere.models.dto.ProductResponseDTO;
 import com.salesphere.salesphere.models.enums.AvailabilityEnum;
 import com.salesphere.salesphere.models.enums.CategoryEnum;
-import com.salesphere.salesphere.services.ProductService;
+import com.salesphere.salesphere.services.product.ProductService;
 import com.salesphere.salesphere.services.email.EmailService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

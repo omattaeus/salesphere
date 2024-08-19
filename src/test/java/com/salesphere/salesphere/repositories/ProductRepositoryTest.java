@@ -1,10 +1,13 @@
 package com.salesphere.salesphere.repositories;
 
-import com.salesphere.salesphere.models.Category;
-import com.salesphere.salesphere.models.Product;
-import com.salesphere.salesphere.models.Availability;
+import com.salesphere.salesphere.models.product.Category;
+import com.salesphere.salesphere.models.product.Product;
+import com.salesphere.salesphere.models.product.Availability;
 import com.salesphere.salesphere.models.enums.CategoryEnum;
 import com.salesphere.salesphere.models.enums.AvailabilityEnum;
+import com.salesphere.salesphere.repositories.product.AvailabilityRepository;
+import com.salesphere.salesphere.repositories.product.CategoryRepository;
+import com.salesphere.salesphere.repositories.product.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

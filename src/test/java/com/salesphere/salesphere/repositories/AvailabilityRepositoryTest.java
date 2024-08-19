@@ -1,7 +1,8 @@
 package com.salesphere.salesphere.repositories;
 
-import com.salesphere.salesphere.models.Availability;
+import com.salesphere.salesphere.models.product.Availability;
 import com.salesphere.salesphere.models.enums.AvailabilityEnum;
+import com.salesphere.salesphere.repositories.product.AvailabilityRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
